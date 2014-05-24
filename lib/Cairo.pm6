@@ -157,6 +157,14 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_fill_preserve(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_stroke_preserve(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
     sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
         is native('libcairo.so.2')
         {*}
@@ -200,11 +208,17 @@ class Cairo::Context {
         cairo_set_source_rgba($!context, $r, $g, $b, $a);
     }
 
-    method fill {
+    multi method fill {
         cairo_fill($!context)
     }
-    method stroke {
+    multi method stroke {
         cairo_stroke($!context)
+    }
+    multi method fill(:$preserve!) {
+        cairo_fill_preserve($!context);
+    }
+    multi method stroke(:$preserve!) {
+        cairo_stroke_preserve($!context);
     }
 
     multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
