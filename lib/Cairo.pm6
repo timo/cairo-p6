@@ -157,15 +157,15 @@ class Cairo::Context {
     has cairo_t $!context;
 
     multi method new(cairo_t $context) {
-        self.bless($context);
+        self.bless(:$context);
     }
 
     multi method new(Cairo::Surface $surface) {
         my $context = cairo_create($surface.surface);
-        self.bless($context);
+        self.bless(:$context);
     }
 
-    submethod BUILD($!context) { }
+    submethod BUILD(:$!context) { }
 
     method push_group() {
         cairo_push_group($!context);
