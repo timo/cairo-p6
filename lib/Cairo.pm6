@@ -154,6 +154,10 @@ class Cairo::Context {
         {*}
 
 
+    sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
+        is native('libcairo.so.2')
+        {*}
+
     has cairo_t $!context;
 
     multi method new(cairo_t $context) {
@@ -195,5 +199,12 @@ class Cairo::Context {
 
     method fill {
         cairo_fill($!context)
+    }
+
+    multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
+        cairo_rectangle($!context, $x.Num, $y.Num, $w.Num, $h.Num);
+    }
+    multi method rectangle(num $x, num $y, num $w, num $h) {
+        cairo_rectangle($!context, $x, $y, $w, $h);
     }
 }
