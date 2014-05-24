@@ -3,6 +3,8 @@ use NativeCall;
 class cairo_t is repr('CPointer') { }
 
 class cairo_surface_t is repr('CPointer') { }
+
+class cairo_pattern_t is repr('CPointer') { }
  
 enum Cairo::Format (
     "FORMAT_INVALID" => -1,
@@ -103,6 +105,95 @@ class Cairo::Image {
     }
 }
 
+class Cairo::Pattern {
+    sub cairo_pattern_destroy(cairo_pattern_t $pat)
+        is native('libcairo.so.2')
+        {*}
+
+    has $!pattern;
+
+    method new($pattern) {
+        self.bless(:$pattern)
+    }
+
+    method destroy() {
+        cairo_pattern_destroy($!pattern);
+    }
+}
+
 class Cairo::Context {
+    sub cairo_create(cairo_surface_t $surface)
+        returns cairo_t
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_push_group(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_pop_group(cairo_t $ctx)
+        returns cairo_pattern_t
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_pop_group_to_source(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+
+    sub cairo_set_source_rgb(cairo_t $context, num $r, num $g, num $b)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_set_source_rgba(cairo_t $context, num $r, num $g, num $b, num $a)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_fill(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+
     has cairo_t $!context;
+
+    multi method new(cairo_t $context) {
+        self.bless($context);
+    }
+
+    multi method new(Cairo::Surface $surface) {
+        my $context = cairo_create($surface.surface);
+        self.bless($context);
+    }
+
+    submethod BUILD($!context) { }
+
+    method push_group() {
+        cairo_push_group($!context);
+    }
+
+    method pop_group() returns Cairo::Pattern {
+        Cairo::Pattern.new(cairo_pop_group($!context));
+    }
+
+    method pop_group_to_source() {
+        cairo_pop_group_to_source($!context);
+    }
+
+    multi method rgb(Cool $r, Cool $g, Cool $b) {
+        cairo_set_source_rgb($!context, $r.Num, $g.Num, $b.Num);
+    }
+    multi method rgb(num $r, num $g, num $b) {
+        cairo_set_source_rgb($!context, $r, $g, $b);
+    }
+
+    multi method rgba(Cool $r, Cool $g, Cool $b, Cool $a) {
+        cairo_set_source_rgba($!context, $r.Num, $g.Num, $b.Num, $a.Num);
+    }
+    multi method rgb(num $r, num $g, num $b, num $a) {
+        cairo_set_source_rgba($!context, $r, $g, $b, $a);
+    }
+
+    method fill {
+        cairo_fill($!context)
+    }
 }
