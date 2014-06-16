@@ -146,6 +146,31 @@ class Cairo::Context {
         {*}
 
 
+    sub cairo_line_to(cairo_t $context, num $x, num $y)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_move_to(cairo_t $context, num $x, num $y)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_line_to(cairo_t $context, num $x, num $y)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_move_to(cairo_t $context, num $x, num $y)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_curve_to(cairo_t $context, num $x1, num $y1, num $x2, num $y2, num $x3, num $x3)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_close_path(cairo_t $context)
+        is native('libcairo.so.2')
+        {*}
+
+
     sub cairo_set_source_rgb(cairo_t $context, num $r, num $g, num $b)
         is native('libcairo.so.2')
         {*}
@@ -204,6 +229,7 @@ class Cairo::Context {
         cairo_pop_group_to_source($!context);
     }
 
+
     multi method rgb(Cool $r, Cool $g, Cool $b) {
         cairo_set_source_rgb($!context, $r.Num, $g.Num, $b.Num);
     }
@@ -218,6 +244,7 @@ class Cairo::Context {
         cairo_set_source_rgba($!context, $r, $g, $b, $a);
     }
 
+
     multi method fill {
         cairo_fill($!context)
     }
@@ -229,6 +256,25 @@ class Cairo::Context {
     }
     multi method stroke(:$preserve!) {
         cairo_stroke_preserve($!context);
+    }
+
+
+    multi method move_to(Cool $x, Cool $y) {
+        cairo_move_to($!context, $x.Num, $y.Num);
+    }
+    multi method line_to(Cool $x, Cool $y) {
+        cairo_line_to($!context, $x.Num, $y.Num);
+    }
+
+    multi method move_to(Cool $x, Cool $y, :$relative!) {
+        cairo_rel_move_to($!context, $x.Num, $y.Num);
+    }
+    multi method line_to(Cool $x, Cool $y, :$relative!) {
+        cairo_rel_line_to($!context, $x.Num, $y.Num);
+    }
+
+    method close_path() {
+        cairo_close_path($!context);
     }
 
     multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
