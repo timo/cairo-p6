@@ -127,6 +127,11 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_destroy(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+
     sub cairo_push_group(cairo_t $ctx)
         is native('libcairo.so.2')
         {*}
@@ -181,6 +186,11 @@ class Cairo::Context {
     }
 
     submethod BUILD(:$!context) { }
+
+    method destroy() {
+        cairo_destroy($!context)
+    }
+
 
     method push_group() {
         cairo_push_group($!context);
