@@ -154,15 +154,15 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
-    sub cairo_line_to(cairo_t $context, num $x, num $y)
+    sub cairo_rel_line_to(cairo_t $context, num $x, num $y)
         is native('libcairo.so.2')
         {*}
 
-    sub cairo_move_to(cairo_t $context, num $x, num $y)
+    sub cairo_rel_move_to(cairo_t $context, num $x, num $y)
         is native('libcairo.so.2')
         {*}
 
-    sub cairo_curve_to(cairo_t $context, num $x1, num $y1, num $x2, num $y2, num $x3, num $x3)
+    sub cairo_curve_to(cairo_t $context, num $x1, num $y1, num $x2, num $y2, num $x3, num $y3)
         is native('libcairo.so.2')
         {*}
 
