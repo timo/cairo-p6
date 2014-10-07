@@ -60,6 +60,12 @@ enum cairo_status_t <
     STATUS_LAST_STATUS
 >;
 
+enum Cairo::LineCap <
+    LINE_CAP_BUTT
+    LINE_CAP_ROUND
+    LINE_CAP_SQUARE
+>;
+
 sub cairo_format_stride_for_width(int $format, int $width)
     returns int
     is native('libcairo.so.2')
@@ -179,6 +185,23 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_set_line_cap(cairo_t $context, int $cap)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_get_line_cap(cairo_t $context)
+        returns int
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_set_line_width(cairo_t $context, num $width)
+        is native('libcairo.so.2')
+        {*}
+    sub cairo_get_line_width(cairo_t $context)
+        returns num
+        is native('libcairo.so.2')
+        {*}
+
     sub cairo_fill(cairo_t $ctx)
         is native('libcairo.so.2')
         {*}
@@ -282,5 +305,16 @@ class Cairo::Context {
     }
     multi method rectangle(num $x, num $y, num $w, num $h) {
         cairo_rectangle($!context, $x, $y, $w, $h);
+    }
+    method line_cap() {
+        Proxy.new:
+            FETCH => { Cairo::LineCap(cairo_get_line_cap($!context)) },
+            STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
+    }
+
+    method line_width() {
+        Proxy.new:
+            FETCH => { cairo_get_line_width($!context) },
+            STORE => -> \c, \value { cairo_set_line_width($!context, value.Num) }
     }
 }
