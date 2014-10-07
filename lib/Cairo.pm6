@@ -176,6 +176,10 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
+        is native('libcairo.so.2')
+        {*}
+
 
     sub cairo_set_source_rgb(cairo_t $context, num $r, num $g, num $b)
         is native('libcairo.so.2')
@@ -218,7 +222,13 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
-    sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
+    sub cairo_translate(cairo_t $ctx, num $tx, num $ty)
+        is native('libcairo.so.2')
+        {*}
+    sub cairo_scale(cairo_t $ctx, num $sx, num $sy)
+        is native('libcairo.so.2')
+        {*}
+    sub cairo_rotate(cairo_t $ctx, num $angle)
         is native('libcairo.so.2')
         {*}
 
@@ -306,6 +316,28 @@ class Cairo::Context {
     multi method rectangle(num $x, num $y, num $w, num $h) {
         cairo_rectangle($!context, $x, $y, $w, $h);
     }
+
+    multi method translate(num $tx, num $ty) {
+        cairo_translate($!context, $tx, $ty)
+    }
+    multi method translate(Cool $tx, Cool $ty) {
+        cairo_translate($!context, $tx.Num, $ty.Num)
+    }
+
+    multi method scale(num $sx, num $sy) {
+        cairo_scale($!context, $sx, $sy)
+    }
+    multi method scale(Cool $sx, Cool $sy) {
+        cairo_scale($!context, $sx.Num, $sy.Num)
+    }
+
+    multi method rotate(num $angle) {
+        cairo_rotate($!context, $angle)
+    }
+    multi method rotate(Cool $angle) {
+        cairo_rotate($!context, $angle.Num)
+    }
+
     method line_cap() {
         Proxy.new:
             FETCH => { Cairo::LineCap(cairo_get_line_cap($!context)) },
