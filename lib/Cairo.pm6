@@ -306,6 +306,10 @@ class Cairo::Context {
         cairo_rel_line_to($!context, $x.Num, $y.Num);
     }
 
+    multi method curve_to(Cool $x1, Cool $y1, Cool $x2, Cool $y2, Cool $x3, Cool $y3) {
+        cairo_curve_to($!context, $x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
+    }
+
     method close_path() {
         cairo_close_path($!context);
     }
