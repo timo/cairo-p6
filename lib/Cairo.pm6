@@ -259,6 +259,14 @@ class Cairo::Context {
         is native('libcairo')
         {*}
 
+    sub cairo_mask(cairo_t $context, cairo_pattern_t $pattern)
+        is native('libcairo')
+        {*}
+    sub cairo_mask_surface(cairo_t $context, cairo_surface_t $surface, num $sx, num $sy)
+        is native('libcairo')
+        {*}
+
+
     sub cairo_fill(cairo_t $ctx)
         is native('libcairo')
         {*}
@@ -355,6 +363,10 @@ class Cairo::Context {
 
     method set_source_surface(Cairo::Surface $surface, Cool $x = 0, Cool $y = 0) {
         cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
+    }
+
+    multi method mask(Cairo::Surface $surface, Cool $sx = 0, Cool $sy = 0) {
+        cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
     }
 
     multi method fill {
