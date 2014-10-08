@@ -17,7 +17,7 @@ class Cairo::Pattern { ... }
 class Cairo::Context { ... }
 
 enum Cairo::Format (
-    "FORMAT_INVALID" => -1,
+     FORMAT_INVALID => -1,
     "FORMAT_ARGB32"   ,
     "FORMAT_RGB24"    ,
     "FORMAT_A8"       ,
