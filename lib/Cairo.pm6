@@ -95,11 +95,24 @@ class Cairo::Surface {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_surface_reference(cairo_surface_t $surface)
+        returns cairo_surface_t
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_surface_destroy(cairo_surface_t $surface)
+        is native('libcairo.so.2')
+        {*}
+
     method write_png(Str $filename) {
         my $result = cairo_surface_write_to_png($!surface, $filename);
         fail cairo_status_t($result) if $result != STATUS_SUCCESS;
         cairo_status_t($result);
     }
+
+    method reference() { cairo_surface_reference($!surface) }
+    method destroy  () { cairo_surface_destroy($!surface) }
+}
 }
 
 class Cairo::Image {
