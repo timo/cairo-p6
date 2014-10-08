@@ -113,6 +113,26 @@ class Cairo::Surface {
     method reference() { cairo_surface_reference($!surface) }
     method destroy  () { cairo_surface_destroy($!surface) }
 }
+
+class Cairo::RecordingSurface {
+    sub cairo_recording_surface_create(int $content, cairo_rectangle_t $extents)
+        returns cairo_surface_t
+        is native('libcairo.so.2')
+        {*}
+
+    method new(Cairo::Content $content = CONTENT_COLOR_ALPHA) {
+        my cairo_surface_t $surface = cairo_recording_surface_create($content.Int, OpaquePointer);
+        my Cairo::RecordingSurface $rsurf = self.bless: :$surface;
+        $rsurf.reference;
+        $rsurf;
+    }
+
+    method record(&things, Cairo::Content :$content = CONTENT_COLOR_ALPHA) {
+        my Cairo::Context $ctx .= new(my $surface = self.new($content));
+        &things($ctx);
+        $ctx.destroy();
+        return $surface;
+    }
 }
 
 class Cairo::Image {
