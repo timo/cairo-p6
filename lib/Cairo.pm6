@@ -5,7 +5,17 @@ class cairo_t is repr('CPointer') { }
 class cairo_surface_t is repr('CPointer') { }
 
 class cairo_pattern_t is repr('CPointer') { }
- 
+
+class cairo_matrix_t is repr('CPointer') { }
+
+class cairo_rectangle_t is repr('CPointer') { }
+
+class Cairo::Surface { ... }
+class Cairo::RecordingSurface is Cairo::Surface { ... }
+class Cairo::Image { ... }
+class Cairo::Pattern { ... }
+class Cairo::Context { ... }
+
 enum Cairo::Format (
     "FORMAT_INVALID" => -1,
     "FORMAT_ARGB32"   ,
@@ -65,6 +75,12 @@ enum Cairo::LineCap <
     LINE_CAP_ROUND
     LINE_CAP_SQUARE
 >;
+
+enum Cairo::Content (
+    CONTENT_COLOR => 0x1000,
+    CONTENT_ALPHA => 0x2000,
+    CONTENT_COLOR_ALPHA => 0x3000,
+);
 
 sub cairo_format_stride_for_width(int $format, int $width)
     returns int
