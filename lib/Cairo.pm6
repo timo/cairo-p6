@@ -235,6 +235,10 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_set_source_surface(cairo_t $context, cairo_surface_t $surface, num $x, num $y)
+        is native('libcairo.so.2')
+        {*}
+
     sub cairo_fill(cairo_t $ctx)
         is native('libcairo.so.2')
         {*}
@@ -251,6 +255,10 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
 
+    sub cairo_paint(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
     sub cairo_translate(cairo_t $ctx, num $tx, num $ty)
         is native('libcairo.so.2')
         {*}
@@ -258,6 +266,18 @@ class Cairo::Context {
         is native('libcairo.so.2')
         {*}
     sub cairo_rotate(cairo_t $ctx, num $angle)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_save(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+    sub cairo_restore(cairo_t $ctx)
+        is native('libcairo.so.2')
+        {*}
+
+    sub cairo_status(cairo_t $ctx)
+        returns int
         is native('libcairo.so.2')
         {*}
 
@@ -270,6 +290,10 @@ class Cairo::Context {
     multi method new(Cairo::Surface $surface) {
         my $context = cairo_create($surface.surface);
         self.bless(:$context);
+    }
+
+    method status {
+        cairo_status_t(cairo_status($!context))
     }
 
     submethod BUILD(:$!context) { }
@@ -291,6 +315,8 @@ class Cairo::Context {
         cairo_pop_group_to_source($!context);
     }
 
+    method save()    { cairo_save($!context) }
+    method restore() { cairo_restore($!context) }
 
     multi method rgb(Cool $r, Cool $g, Cool $b) {
         cairo_set_source_rgb($!context, $r.Num, $g.Num, $b.Num);
@@ -307,6 +333,10 @@ class Cairo::Context {
     }
 
 
+    method set_source_surface(Cairo::Surface $surface, Cool $x = 0, Cool $y = 0) {
+        cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
+    }
+
     multi method fill {
         cairo_fill($!context)
     }
@@ -318,6 +348,10 @@ class Cairo::Context {
     }
     multi method stroke(:$preserve!) {
         cairo_stroke_preserve($!context);
+    }
+
+    method paint {
+        cairo_paint($!context)
     }
 
 
