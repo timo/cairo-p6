@@ -158,6 +158,17 @@ class Cairo::Image {
         }
         return Cairo::Surface.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
     }
+
+    method record(&things, Cool $width?, Cool $height?, Cairo::Format $format = FORMAT_ARGB32) {
+        if defined $width and defined $height {
+            my $surface = self.create($format, $width, $height);
+            my $ctx = Cairo::Context.new($surface);
+            &things($ctx);
+            return $surface;
+        } else {
+            die "recording surfaces are currently NYI. please specify a width and height for your Cairo::Image.";
+        }
+    }
 }
 
 class Cairo::Pattern {
