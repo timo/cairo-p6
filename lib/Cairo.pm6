@@ -379,6 +379,9 @@ class Cairo::Context {
     multi method mask(Cairo::Surface $surface, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
     }
+    multi method mask(Cairo::Surface $surface, num $sx = 0, num $sy = 0) {
+        cairo_mask_surface($!context, $surface.surface, $sx, $sy)
+    }
 
     multi method fill {
         cairo_fill($!context)
