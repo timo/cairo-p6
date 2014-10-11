@@ -423,13 +423,13 @@ class Cairo::Context {
     multi method mask(Cairo::Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask($!context, $pat.pattern, $sx.Num, $sy.Num)
     }
-    multi method mask(Cairo::Pattern $pat, num $sx = 0, num $sy = 0) {
+    multi method mask(Cairo::Pattern $pat, num $sx = 0e0, num $sy = 0e0) {
         cairo_mask($!context, $pat.pattern, $sx, $sy)
     }
     multi method mask(Cairo::Surface $surface, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
     }
-    multi method mask(Cairo::Surface $surface, num $sx = 0, num $sy = 0) {
+    multi method mask(Cairo::Surface $surface, num $sx = 0e0, num $sy = 0e0) {
         cairo_mask_surface($!context, $surface.surface, $sx, $sy)
     }
 
