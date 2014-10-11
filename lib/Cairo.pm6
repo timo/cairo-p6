@@ -176,7 +176,7 @@ class Cairo::Pattern {
         is native('libcairo')
         {*}
 
-    has $!pattern;
+    has $.pattern;
 
     method new($pattern) {
         self.bless(:$pattern)
@@ -376,6 +376,12 @@ class Cairo::Context {
         cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
     }
 
+    multi method mask(Cairo::Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
+        cairo_mask($!context, $pat, $sx.Num, $sy.Num)
+    }
+    multi method mask(Cairo::Pattern $pat, num $sx = 0, num $sy = 0) {
+        cairo_mask($!context, $pat, $sx, $sy)
+    }
     multi method mask(Cairo::Surface $surface, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
     }
