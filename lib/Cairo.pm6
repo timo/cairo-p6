@@ -70,6 +70,42 @@ enum cairo_status_t <
     STATUS_LAST_STATUS
 >;
 
+enum Cairo::Operator <
+    OPERATOR_CLEAR
+
+    OPERATOR_SOURCE
+    OPERATOR_OVER
+    OPERATOR_IN
+    OPERATOR_OUT
+    OPERATOR_ATOP
+
+    OPERATOR_DEST
+    OPERATOR_DEST_OVER
+    OPERATOR_DEST_IN
+    OPERATOR_DEST_OUT
+    OPERATOR_DEST_ATOP
+
+    OPERATOR_XOR
+    OPERATOR_ADD
+    OPERATOR_SATURATE
+
+    OPERATOR_MULTIPLY
+    OPERATOR_SCREEN
+    OPERATOR_OVERLAY
+    OPERATOR_DARKEN
+    OPERATOR_LIGHTEN
+    OPERATOR_COLOR_DODGE
+    OPERATOR_COLOR_BURN
+    OPERATOR_HARD_LIGHT
+    OPERATOR_SOFT_LIGHT
+    OPERATOR_DIFFERENCE
+    OPERATOR_EXCLUSION
+    OPERATOR_HSL_HUE
+    OPERATOR_HSL_SATURATION
+    OPERATOR_HSL_COLOR
+    OPERATOR_HSL_LUMINOSITY
+>;
+
 enum Cairo::LineCap <
     LINE_CAP_BUTT
     LINE_CAP_ROUND
@@ -263,6 +299,14 @@ class Cairo::Context {
         {*}
     sub cairo_get_line_width(cairo_t $context)
         returns num
+        is native('libcairo')
+        {*}
+
+    sub cairo_get_operator(cairo_t $context)
+        returns int
+        is native('libcairo')
+        {*}
+    sub cairo_set_operator(cairo_t $context, int $op)
         is native('libcairo')
         {*}
 
@@ -461,6 +505,12 @@ class Cairo::Context {
         Proxy.new:
             FETCH => { Cairo::LineCap(cairo_get_line_cap($!context)) },
             STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
+    }
+
+    method operator() {
+        Proxy.new:
+            FETCH => { Cairo::LineCap(cairo_get_operator($!context)) },
+            STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
     }
 
     method line_width() {
