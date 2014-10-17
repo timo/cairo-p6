@@ -275,6 +275,13 @@ class Cairo::Context {
         is native('libcairo')
         {*}
 
+    sub cairo_arc(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
+        is native('libcairo')
+        {*}
+    sub cairo_arc_negative(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
+        is native('libcairo')
+        {*}
+
     sub cairo_close_path(cairo_t $context)
         is native('libcairo')
         {*}
@@ -474,6 +481,13 @@ class Cairo::Context {
 
     multi method curve_to(Cool $x1, Cool $y1, Cool $x2, Cool $y2, Cool $x3, Cool $y3) {
         cairo_curve_to($!context, $x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
+    }
+
+    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
+        cairo_arc($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+    }
+    multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
+        cairo_arc($!context, $xc, $yc, $radius, $angle1, $angle2);
     }
 
     method close_path() {
