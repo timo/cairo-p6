@@ -335,6 +335,12 @@ class Cairo::Context {
         is native('libcairo')
         {*}
 
+    sub cairo_clip(cairo_t $context)
+        is native('libcairo')
+        {*}
+    sub cairo_clip_preserve(cairo_t $context)
+        is native('libcairo')
+        {*}
 
     sub cairo_fill(cairo_t $ctx)
         is native('libcairo')
@@ -458,6 +464,12 @@ class Cairo::Context {
     }
     multi method stroke(:$preserve!) {
         cairo_stroke_preserve($!context);
+    }
+    multi method clip {
+        cairo_clip($!context);
+    }
+    multi method clip(:$preserve!) {
+        cairo_clip_preserve($!context);
     }
 
     method paint {
