@@ -146,6 +146,13 @@ class Cairo::Surface {
         cairo_status_t($result);
     }
 
+    method record(&things) {
+        my $ctx = Cairo::Context.new(self);
+        &things($ctx);
+        $ctx.destroy();
+        return self;
+    }
+
     method reference() { cairo_surface_reference($!surface) }
     method destroy  () { cairo_surface_destroy($!surface) }
 }
