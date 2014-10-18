@@ -10,6 +10,8 @@ class cairo_matrix_t is repr('CPointer') { }
 
 class cairo_rectangle_t is repr('CPointer') { }
 
+class cairo_path_t is repr('CPointer') { }
+
 class Cairo::Surface { ... }
 class Cairo::RecordingSurface is Cairo::Surface { ... }
 class Cairo::Image { ... }
@@ -251,6 +253,22 @@ class Cairo::Context {
         {*}
 
 
+    sub cairo_copy_path(cairo_t $ctx)
+        returns cairo_path_t
+        is native('libcairo')
+        {*}
+
+    sub cairo_copy_path_flat(cairo_t $ctx)
+        returns cairo_path_t
+        is native('libcairo')
+        {*}
+
+    sub cairo_append_path(cairo_t $ctx, cairo_path_t $path)
+        returns cairo_path_t
+        is native('libcairo')
+        {*}
+
+
     sub cairo_push_group(cairo_t $ctx)
         is native('libcairo')
         {*}
@@ -434,6 +452,25 @@ class Cairo::Context {
 
     method pop_group_to_source() {
         cairo_pop_group_to_source($!context);
+    }
+
+    multi method copy_path() {
+        cairo_copy_path($!context);
+    }
+    multi method copy_path(:$flat!) {
+        cairo_copy_path_flat($!context);
+    }
+    method append_path($path) {
+        cairo_append_path($!context, $path)
+    }
+
+    method memoize_path($storage is rw, &creator, :$flat?) {
+        if defined $storage {
+            self.append_path($storage);
+        } else {
+            &creator();
+            $storage = self.copy_path(:$flat);
+        }
     }
 
     method save()    { cairo_save($!context) }
