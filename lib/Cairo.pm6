@@ -118,6 +118,16 @@ enum Cairo::Content (
     CONTENT_COLOR_ALPHA => 0x3000,
 );
 
+enum Cairo::Antialias <
+    ANTIALIAS_DEFAULT
+    ANTIALIAS_NONE
+    ANTIALIAS_GRAY
+    ANTIALIAS_SUBPIXEL
+    ANTIALIAS_FAST
+    ANTIALIAS_GOOD
+    ANTIALIAS_BEST
+>;
+
 sub cairo_format_stride_for_width(int $format, int $width)
     returns int
     is native('libcairo')
@@ -321,6 +331,14 @@ class Cairo::Context {
         is native('libcairo')
         {*}
     sub cairo_set_operator(cairo_t $context, int $op)
+        is native('libcairo')
+        {*}
+
+    sub cairo_get_antialias(cairo_t $context)
+        returns int
+        is native('libcairo')
+        {*}
+    sub cairo_set_antialias(cairo_t $context, int $op)
         is native('libcairo')
         {*}
 
@@ -544,6 +562,11 @@ class Cairo::Context {
         Proxy.new:
             FETCH => { Cairo::LineCap(cairo_get_operator($!context)) },
             STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
+    }
+    method antialias() {
+        Proxy.new:
+            FETCH => { Cairo::Antialias(cairo_get_antialias($!context)) },
+            STORE => -> \c, \value { cairo_set_antialias($!context, value.Int) }
     }
 
     method line_width() {
