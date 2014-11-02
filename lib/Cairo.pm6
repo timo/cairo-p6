@@ -130,8 +130,8 @@ enum Cairo::Antialias <
     ANTIALIAS_BEST
 >;
 
-sub cairo_format_stride_for_width(int $format, int $width)
-    returns int
+sub cairo_format_stride_for_width(int32 $format, int32 $width)
+    returns int32
     is native('libcairo')
     {*}
 
@@ -139,7 +139,7 @@ class Cairo::Surface {
     has $.surface;
 
     sub cairo_surface_write_to_png(cairo_surface_t $surface, Str $filename)
-        returns int
+        returns int32
         is native('libcairo')
         {*}
 
@@ -182,7 +182,7 @@ class Cairo::Surface {
 }
 
 class Cairo::RecordingSurface {
-    sub cairo_recording_surface_create(int $content, cairo_rectangle_t $extents)
+    sub cairo_recording_surface_create(int32 $content, cairo_rectangle_t $extents)
         returns cairo_surface_t
         is native('libcairo')
         {*}
@@ -203,12 +203,12 @@ class Cairo::RecordingSurface {
 }
 
 class Cairo::Image {
-    sub cairo_image_surface_create(int $format, int $width, int $height)
+    sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
         is native('libcairo')
         {*}
 
-    sub cairo_image_surface_create_for_data(Blob[uint8] $data, int $format, int $width, int $height, int $stride)
+    sub cairo_image_surface_create_for_data(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
         is native('libcairo')
         {*}
@@ -339,12 +339,12 @@ class Cairo::Context {
         is native('libcairo')
         {*}
 
-    sub cairo_set_line_cap(cairo_t $context, int $cap)
+    sub cairo_set_line_cap(cairo_t $context, int32 $cap)
         is native('libcairo')
         {*}
 
     sub cairo_get_line_cap(cairo_t $context)
-        returns int
+        returns int32
         is native('libcairo')
         {*}
 
@@ -357,18 +357,18 @@ class Cairo::Context {
         {*}
 
     sub cairo_get_operator(cairo_t $context)
-        returns int
+        returns int32
         is native('libcairo')
         {*}
-    sub cairo_set_operator(cairo_t $context, int $op)
+    sub cairo_set_operator(cairo_t $context, int32 $op)
         is native('libcairo')
         {*}
 
     sub cairo_get_antialias(cairo_t $context)
-        returns int
+        returns int32
         is native('libcairo')
         {*}
-    sub cairo_set_antialias(cairo_t $context, int $op)
+    sub cairo_set_antialias(cairo_t $context, int32 $op)
         is native('libcairo')
         {*}
 
@@ -428,7 +428,7 @@ class Cairo::Context {
         {*}
 
     sub cairo_status(cairo_t $ctx)
-        returns int
+        returns int32
         is native('libcairo')
         {*}
 
