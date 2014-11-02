@@ -152,6 +152,15 @@ class Cairo::Surface {
         is native('libcairo')
         {*}
 
+    sub cairo_image_surface_get_data(cairo_surface_t $surface)
+        returns OpaquePointer
+        is native('libcairo')
+        {*}
+    sub cairo_image_surface_get_stride(cairo_surface_t $surface)
+        returns int32
+        is native('libcairo')
+        {*}
+
     method write_png(Str $filename) {
         my $result = cairo_surface_write_to_png($!surface, $filename);
         fail cairo_status_t($result) if $result != STATUS_SUCCESS;
@@ -164,6 +173,9 @@ class Cairo::Surface {
         $ctx.destroy();
         return self;
     }
+
+    method data()   { cairo_image_surface_get_data($!surface) }
+    method stride() { cairo_image_surface_get_stride($!surface) }
 
     method reference() { cairo_surface_reference($!surface) }
     method destroy  () { cairo_surface_destroy($!surface) }
