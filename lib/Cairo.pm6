@@ -22,7 +22,6 @@ class cairo_rectangle_t is repr('CPointer') { }
 class cairo_path_t is repr('CPointer') { }
 
 class Cairo::Surface { ... }
-class Cairo::RecordingSurface is Cairo::Surface { ... }
 class Cairo::Image { ... }
 class Cairo::Pattern { ... }
 class Cairo::Context { ... }
