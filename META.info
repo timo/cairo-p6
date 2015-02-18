@@ -2,7 +2,7 @@
     "name" : "Cairo",
     "version" : "0.0.1",
     "description" : "Cairo 2D graphics library",
-    "depends" : [ "NativeCall" ],
+    "depends" : [ ],
     "repo-type" : "git",
     "source-url" : "git://github.com/timo/cairo-p6.git"
 }
