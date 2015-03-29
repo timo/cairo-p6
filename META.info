@@ -2,7 +2,23 @@
     "name" : "Cairo",
     "version" : "0.0.1",
     "description" : "Cairo 2D graphics library",
+    "build-depends" : [
+        "NativeCall"
+    ],
+    "test-depends" : [ ],
     "depends" : [ ],
+    "provides" : {
+        "Cairo::Surface" : "lib/Cairo.pm6",
+        "Cairo::Image" : "lib/Cairo.pm6",
+        "Cairo::Pattern" : "lib/Cairo.pm6",
+        "Cairo::Context" : "lib/Cairo.pm6",
+        "Cairo::Format" : "lib/Cairo.pm6",
+        "Cairo::Operator" : "lib/Cairo.pm6",
+        "Cairo::LineCap" : "lib/Cairo.pm6",
+        "Cairo::Content" : "lib/Cairo.pm6",
+        "Cairo::Antialias" : "lib/Cairo.pm6",
+        "Cairo::RecordingSurface" : "lib/Cairo.pm6",
+    },
     "repo-type" : "git",
     "source-url" : "git://github.com/timo/cairo-p6.git"
 }
