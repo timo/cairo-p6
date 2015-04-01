@@ -1,3 +1,5 @@
+module Cairo;
+
 my Str $cairolib;
 BEGIN {
     if $*VM.config<dll> ~~ /dll/ {
@@ -21,12 +23,12 @@ class cairo_rectangle_t is repr('CPointer') { }
 
 class cairo_path_t is repr('CPointer') { }
 
-class Cairo::Surface { ... }
-class Cairo::Image { ... }
-class Cairo::Pattern { ... }
-class Cairo::Context { ... }
+class Surface { ... }
+class Image { ... }
+class Pattern { ... }
+class Context { ... }
 
-enum Cairo::Format (
+our enum Format (
      FORMAT_INVALID => -1,
     "FORMAT_ARGB32"   ,
     "FORMAT_RGB24"    ,
@@ -36,7 +38,7 @@ enum Cairo::Format (
     "FORMAT_RGB30"    ,
 );
 
-enum cairo_status_t <
+our enum cairo_status_t <
     STATUS_SUCCESS
 
     STATUS_NO_MEMORY
@@ -80,7 +82,7 @@ enum cairo_status_t <
     STATUS_LAST_STATUS
 >;
 
-enum Cairo::Operator <
+our enum Operator <
     OPERATOR_CLEAR
 
     OPERATOR_SOURCE
@@ -116,19 +118,19 @@ enum Cairo::Operator <
     OPERATOR_HSL_LUMINOSITY
 >;
 
-enum Cairo::LineCap <
+our enum LineCap <
     LINE_CAP_BUTT
     LINE_CAP_ROUND
     LINE_CAP_SQUARE
 >;
 
-enum Cairo::Content (
+our enum Content (
     CONTENT_COLOR => 0x1000,
     CONTENT_ALPHA => 0x2000,
     CONTENT_COLOR_ALPHA => 0x3000,
 );
 
-enum Cairo::Antialias <
+our enum Antialias <
     ANTIALIAS_DEFAULT
     ANTIALIAS_NONE
     ANTIALIAS_GRAY
@@ -143,7 +145,7 @@ sub cairo_format_stride_for_width(int32 $format, int32 $width)
     is native($cairolib)
     {*}
 
-class Cairo::Surface {
+class Surface {
     has $.surface;
 
     sub cairo_surface_write_to_png(cairo_surface_t $surface, Str $filename)
@@ -176,7 +178,7 @@ class Cairo::Surface {
     }
 
     method record(&things) {
-        my $ctx = Cairo::Context.new(self);
+        my $ctx = Context.new(self);
         &things($ctx);
         $ctx.destroy();
         return self;
@@ -189,28 +191,28 @@ class Cairo::Surface {
     method destroy  () { cairo_surface_destroy($!surface) }
 }
 
-class Cairo::RecordingSurface {
+class RecordingSurface {
     sub cairo_recording_surface_create(int32 $content, cairo_rectangle_t $extents)
         returns cairo_surface_t
         is native($cairolib)
         {*}
 
-    method new(Cairo::Content $content = CONTENT_COLOR_ALPHA) {
+    method new(Content $content = CONTENT_COLOR_ALPHA) {
         my cairo_surface_t $surface = cairo_recording_surface_create($content.Int, OpaquePointer);
-        my Cairo::RecordingSurface $rsurf = self.bless: :$surface;
+        my RecordingSurface $rsurf = self.bless: :$surface;
         $rsurf.reference;
         $rsurf;
     }
 
-    method record(&things, Cairo::Content :$content = CONTENT_COLOR_ALPHA) {
-        my Cairo::Context $ctx .= new(my $surface = self.new($content));
+    method record(&things, Content :$content = CONTENT_COLOR_ALPHA) {
+        my Context $ctx .= new(my $surface = self.new($content));
         &things($ctx);
         $ctx.destroy();
         return $surface;
     }
 }
 
-class Cairo::Image {
+class Image {
     sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
         is native($cairolib)
@@ -221,23 +223,23 @@ class Cairo::Image {
         is native($cairolib)
         {*}
 
-    multi method create(Cairo::Format $format, Cool $width, Cool $height) {
-        return Cairo::Surface.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
+    multi method create(Format $format, Cool $width, Cool $height) {
+        return Surface.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
-    multi method create(Cairo::Format $format, Cool $width, Cool $height, Blob[uint8] $data, Cool $stride?) {
+    multi method create(Format $format, Cool $width, Cool $height, Blob[uint8] $data, Cool $stride?) {
         if $stride eqv False {
             $stride = $width.Int;
         } elsif $stride eqv True {
             $stride = cairo_format_stride_for_width($format.Int, $width.Int);
         }
-        return Cairo::Surface.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
+        return Surface.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
     }
 
-    method record(&things, Cool $width?, Cool $height?, Cairo::Format $format = FORMAT_ARGB32) {
+    method record(&things, Cool $width?, Cool $height?, Format $format = FORMAT_ARGB32) {
         if defined $width and defined $height {
             my $surface = self.create($format, $width, $height);
-            my $ctx = Cairo::Context.new($surface);
+            my $ctx = Context.new($surface);
             &things($ctx);
             return $surface;
         } else {
@@ -246,7 +248,7 @@ class Cairo::Image {
     }
 }
 
-class Cairo::Pattern {
+class Pattern {
     sub cairo_pattern_destroy(cairo_pattern_t $pat)
         is native($cairolib)
         {*}
@@ -262,7 +264,7 @@ class Cairo::Pattern {
     }
 }
 
-class Cairo::Context {
+class Context {
     sub cairo_create(cairo_surface_t $surface)
         returns cairo_t
         is native($cairolib)
@@ -446,7 +448,7 @@ class Cairo::Context {
         self.bless(:$context);
     }
 
-    multi method new(Cairo::Surface $surface) {
+    multi method new(Surface $surface) {
         my $context = cairo_create($surface.surface);
         self.bless(:$context);
     }
@@ -466,8 +468,8 @@ class Cairo::Context {
         cairo_push_group($!context);
     }
 
-    method pop_group() returns Cairo::Pattern {
-        Cairo::Pattern.new(cairo_pop_group($!context));
+    method pop_group() returns Pattern {
+        Pattern.new(cairo_pop_group($!context));
     }
 
     method pop_group_to_source() {
@@ -511,20 +513,20 @@ class Cairo::Context {
     }
 
 
-    method set_source_surface(Cairo::Surface $surface, Cool $x = 0, Cool $y = 0) {
+    method set_source_surface(Surface $surface, Cool $x = 0, Cool $y = 0) {
         cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
     }
 
-    multi method mask(Cairo::Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
+    multi method mask(Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask($!context, $pat.pattern, $sx.Num, $sy.Num)
     }
-    multi method mask(Cairo::Pattern $pat, num $sx = 0e0, num $sy = 0e0) {
+    multi method mask(Pattern $pat, num $sx = 0e0, num $sy = 0e0) {
         cairo_mask($!context, $pat.pattern, $sx, $sy)
     }
-    multi method mask(Cairo::Surface $surface, Cool $sx = 0, Cool $sy = 0) {
+    multi method mask(Surface $surface, Cool $sx = 0, Cool $sy = 0) {
         cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
     }
-    multi method mask(Cairo::Surface $surface, num $sx = 0e0, num $sy = 0e0) {
+    multi method mask(Surface $surface, num $sx = 0e0, num $sy = 0e0) {
         cairo_mask_surface($!context, $surface.surface, $sx, $sy)
     }
 
@@ -611,18 +613,18 @@ class Cairo::Context {
 
     method line_cap() {
         Proxy.new:
-            FETCH => { Cairo::LineCap(cairo_get_line_cap($!context)) },
+            FETCH => { LineCap(cairo_get_line_cap($!context)) },
             STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
     }
 
     method operator() {
         Proxy.new:
-            FETCH => { Cairo::LineCap(cairo_get_operator($!context)) },
+            FETCH => { LineCap(cairo_get_operator($!context)) },
             STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
     }
     method antialias() {
         Proxy.new:
-            FETCH => { Cairo::Antialias(cairo_get_antialias($!context)) },
+            FETCH => { Antialias(cairo_get_antialias($!context)) },
             STORE => -> \c, \value { cairo_set_antialias($!context, value.Int) }
     }
 

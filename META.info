@@ -1,8 +1,13 @@
 {
+    "perl" : "v6",
     "name" : "Cairo",
-    "version" : "0.0.1",
     "description" : "Cairo 2D graphics library",
+    "version" : "v0.2",
     "depends" : [ ],
-    "repo-type" : "git",
-    "source-url" : "git://github.com/timo/cairo-p6.git"
+  "provides" : {
+    "Cairo" : "lib/Cairo.pm6"
+  },
+  "support" : {
+    "source" : "git://github.com/timo/cairo-p6.git"
+  }
 }
