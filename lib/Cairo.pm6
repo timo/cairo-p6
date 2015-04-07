@@ -1,15 +1,120 @@
 module Cairo;
 
-my Str $cairolib;
-BEGIN {
-    if $*VM.config<dll> ~~ /dll/ {
-        $cairolib = 'libcairo-2';
-    } else {
-        $cairolib = 'libcairo';
+use NativeCall;
+
+###
+# library finding stuff (mostly for windows)
+###
+
+sub find-bundled($lib is copy) {
+    # if we can't find one, assume there's a system install
+    my $base = "lib/Cairo/$lib";
+    for @*INC {
+        if my @files = ($_.files($base) || $_.files("blib/$base")) {
+            my $files = @files[0]<files>;
+            my $tmp = $files{$base} || $files{"blib/$base"};
+
+            # copy to a temp dir
+            $tmp.IO.copy($*SPEC.tmpdir ~ '\\' ~ $lib);
+            $lib = $*SPEC.tmpdir ~ '\\' ~ $lib;
+
+            last;
+        }
     }
+
+    $lib;
 }
 
-use NativeCall;
+sub cairo-lib {
+    state $lib;
+    unless $lib {
+        if $*VM.config<dll> ~~ /dll/ {
+            try load-fontconfig-lib;
+            try load-freetype-lib;
+            try load-pixman-lib;
+            try load-png-lib;
+            try load-zlib-lib;
+            $lib = find-bundled('libcairo-2.dll');
+        } else {
+            $lib = 'libcairo';
+        }
+    }
+    $lib
+}
+sub fontconfig-lib {
+    state $lib;
+    unless $lib {
+        try load-freetype-lib;
+        try load-xml-lib;
+        $lib = find-bundled('libfontconfig-1.dll');
+    }
+    $lib
+}
+sub freetype-lib {
+    state $lib;
+    unless $lib {
+        try load-zlib-lib;
+        $lib = find-bundled('libfreetype-6.dll');
+    }
+    $lib
+}
+sub pixman-lib {
+    state $lib;
+    unless $lib {
+        $lib = find-bundled('libpixman-1-0.dll');
+    }
+    $lib
+}
+sub png-lib {
+    state $lib;
+    unless $lib {
+        $lib = find-bundled('libpng15-15.dll');
+    }
+    $lib
+}
+sub zlib-lib {
+    state $lib;
+    unless $lib {
+        $lib = find-bundled('zlib1.dll');
+    }
+    $lib
+}
+sub xml-lib {
+    state $lib;
+    unless $lib {
+        try load-iconv-lib;
+        try load-lzma-lib;
+        $lib = find-bundled('libxml2-2.dll');
+    }
+    $lib
+}
+sub iconv-lib {
+    state $lib;
+    unless $lib {
+        $lib = find-bundled('libiconv-2.dll');
+    }
+    $lib
+}
+sub lzma-lib {
+    state $lib;
+    unless $lib {
+        $lib = find-bundled('liblzma-5.dll');
+    }
+    $lib
+}
+
+sub load-fontconfig-lib is native(&fontconfig-lib) { ... }
+sub load-freetype-lib is native(&freetype-lib) { ... }
+sub load-pixman-lib is native(&pixman-lib) { ... }
+sub load-png-lib is native(&png-lib) { ... }
+sub load-zlib-lib is native(&zlib-lib) { ... }
+sub load-xml-lib is native(&xml-lib) { ... }
+sub load-iconv-lib is native(&iconv-lib) { ... }
+sub load-lzma-lib is native(&lzma-lib) { ... }
+
+###
+# end of library finding
+###
 
 class cairo_t is repr('CPointer') { }
 
@@ -142,7 +247,7 @@ our enum Antialias <
 
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
-    is native($cairolib)
+    is native(&cairo-lib)
     {*}
 
 class Surface {
@@ -150,25 +255,25 @@ class Surface {
 
     sub cairo_surface_write_to_png(cairo_surface_t $surface, Str $filename)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_surface_reference(cairo_surface_t $surface)
         returns cairo_surface_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_surface_destroy(cairo_surface_t $surface)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_image_surface_get_data(cairo_surface_t $surface)
         returns OpaquePointer
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_image_surface_get_stride(cairo_surface_t $surface)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     method write_png(Str $filename) {
@@ -194,7 +299,7 @@ class Surface {
 class RecordingSurface {
     sub cairo_recording_surface_create(int32 $content, cairo_rectangle_t $extents)
         returns cairo_surface_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     method new(Content $content = CONTENT_COLOR_ALPHA) {
@@ -215,12 +320,12 @@ class RecordingSurface {
 class Image {
     sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_image_surface_create_for_data(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     multi method create(Format $format, Cool $width, Cool $height) {
@@ -250,7 +355,7 @@ class Image {
 
 class Pattern {
     sub cairo_pattern_destroy(cairo_pattern_t $pat)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     has $.pattern;
@@ -267,179 +372,179 @@ class Pattern {
 class Context {
     sub cairo_create(cairo_surface_t $surface)
         returns cairo_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_destroy(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
 
     sub cairo_copy_path(cairo_t $ctx)
         returns cairo_path_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_copy_path_flat(cairo_t $ctx)
         returns cairo_path_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_append_path(cairo_t $ctx, cairo_path_t $path)
         returns cairo_path_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
 
     sub cairo_push_group(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_pop_group(cairo_t $ctx)
         returns cairo_pattern_t
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_pop_group_to_source(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
 
     sub cairo_line_to(cairo_t $context, num $x, num $y)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_move_to(cairo_t $context, num $x, num $y)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_rel_line_to(cairo_t $context, num $x, num $y)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_rel_move_to(cairo_t $context, num $x, num $y)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_curve_to(cairo_t $context, num $x1, num $y1, num $x2, num $y2, num $x3, num $y3)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_arc(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_arc_negative(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_close_path(cairo_t $context)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
 
     sub cairo_set_source_rgb(cairo_t $context, num $r, num $g, num $b)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_set_source_rgba(cairo_t $context, num $r, num $g, num $b, num $a)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_set_line_cap(cairo_t $context, int32 $cap)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_get_line_cap(cairo_t $context)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_set_line_width(cairo_t $context, num $width)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_get_line_width(cairo_t $context)
         returns num
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_get_operator(cairo_t $context)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_set_operator(cairo_t $context, int32 $op)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_get_antialias(cairo_t $context)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_set_antialias(cairo_t $context, int32 $op)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_set_source_surface(cairo_t $context, cairo_surface_t $surface, num $x, num $y)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_mask(cairo_t $context, cairo_pattern_t $pattern)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_mask_surface(cairo_t $context, cairo_surface_t $surface, num $sx, num $sy)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_clip(cairo_t $context)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_clip_preserve(cairo_t $context)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_fill(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_stroke(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_fill_preserve(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_stroke_preserve(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_paint(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_translate(cairo_t $ctx, num $tx, num $ty)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_scale(cairo_t $ctx, num $sx, num $sy)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_rotate(cairo_t $ctx, num $angle)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_save(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
     sub cairo_restore(cairo_t $ctx)
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     sub cairo_status(cairo_t $ctx)
         returns int32
-        is native($cairolib)
+        is native(&cairo-lib)
         {*}
 
     has cairo_t $!context;

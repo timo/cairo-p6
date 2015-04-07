@@ -3,7 +3,7 @@
     "name" : "Cairo",
     "description" : "Cairo 2D graphics library",
     "version" : "v0.2",
-    "depends" : [ ],
+    "depends" : [ "LWP::Simple" ],
   "provides" : {
     "Cairo" : "lib/Cairo.pm6"
   },
