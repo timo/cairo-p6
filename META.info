@@ -8,6 +8,6 @@
     "Cairo" : "lib/Cairo.pm6"
   },
   "support" : {
-    "source-url" : "git://github.com/timo/cairo-p6.git"
+    "source" : "git://github.com/timo/cairo-p6.git"
   }
 }
