@@ -1,4 +1,4 @@
-module Cairo;
+module Cairo {
 
 my Str $cairolib;
 BEGIN {
@@ -633,4 +633,6 @@ class Context {
             FETCH => { cairo_get_line_width($!context) },
             STORE => -> \c, \value { cairo_set_line_width($!context, value.Num) }
     }
+}
+
 }
