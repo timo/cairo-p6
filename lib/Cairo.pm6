@@ -305,30 +305,30 @@ class Context {
         {*}
 
 
-    sub cairo_line_to(cairo_t $context, num $x, num $y)
+    sub cairo_line_to(cairo_t $context, num64 $x, num64 $y)
         is native($cairolib)
         {*}
 
-    sub cairo_move_to(cairo_t $context, num $x, num $y)
+    sub cairo_move_to(cairo_t $context, num64 $x, num64 $y)
         is native($cairolib)
         {*}
 
-    sub cairo_rel_line_to(cairo_t $context, num $x, num $y)
+    sub cairo_rel_line_to(cairo_t $context, num64 $x, num64 $y)
         is native($cairolib)
         {*}
 
-    sub cairo_rel_move_to(cairo_t $context, num $x, num $y)
+    sub cairo_rel_move_to(cairo_t $context, num64 $x, num64 $y)
         is native($cairolib)
         {*}
 
-    sub cairo_curve_to(cairo_t $context, num $x1, num $y1, num $x2, num $y2, num $x3, num $y3)
+    sub cairo_curve_to(cairo_t $context, num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
         is native($cairolib)
         {*}
 
-    sub cairo_arc(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
+    sub cairo_arc(cairo_t $context, num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
         is native($cairolib)
         {*}
-    sub cairo_arc_negative(cairo_t $context, num $xc, num $yc, num $radius, num $angle1, num $angle2)
+    sub cairo_arc_negative(cairo_t $context, num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
         is native($cairolib)
         {*}
 
@@ -336,16 +336,16 @@ class Context {
         is native($cairolib)
         {*}
 
-    sub cairo_rectangle(cairo_t $ctx, num $x, num $y, num $w, num $h)
+    sub cairo_rectangle(cairo_t $ctx, num64 $x, num64 $y, num64 $w, num64 $h)
         is native($cairolib)
         {*}
 
 
-    sub cairo_set_source_rgb(cairo_t $context, num $r, num $g, num $b)
+    sub cairo_set_source_rgb(cairo_t $context, num64 $r, num64 $g, num64 $b)
         is native($cairolib)
         {*}
 
-    sub cairo_set_source_rgba(cairo_t $context, num $r, num $g, num $b, num $a)
+    sub cairo_set_source_rgba(cairo_t $context, num64 $r, num64 $g, num64 $b, num64 $a)
         is native($cairolib)
         {*}
 
@@ -358,11 +358,11 @@ class Context {
         is native($cairolib)
         {*}
 
-    sub cairo_set_line_width(cairo_t $context, num $width)
+    sub cairo_set_line_width(cairo_t $context, num64 $width)
         is native($cairolib)
         {*}
     sub cairo_get_line_width(cairo_t $context)
-        returns num
+        returns num64
         is native($cairolib)
         {*}
 
@@ -382,14 +382,14 @@ class Context {
         is native($cairolib)
         {*}
 
-    sub cairo_set_source_surface(cairo_t $context, cairo_surface_t $surface, num $x, num $y)
+    sub cairo_set_source_surface(cairo_t $context, cairo_surface_t $surface, num64 $x, num64 $y)
         is native($cairolib)
         {*}
 
     sub cairo_mask(cairo_t $context, cairo_pattern_t $pattern)
         is native($cairolib)
         {*}
-    sub cairo_mask_surface(cairo_t $context, cairo_surface_t $surface, num $sx, num $sy)
+    sub cairo_mask_surface(cairo_t $context, cairo_surface_t $surface, num64 $sx, num64 $sy)
         is native($cairolib)
         {*}
 
@@ -420,13 +420,13 @@ class Context {
         is native($cairolib)
         {*}
 
-    sub cairo_translate(cairo_t $ctx, num $tx, num $ty)
+    sub cairo_translate(cairo_t $ctx, num64 $tx, num64 $ty)
         is native($cairolib)
         {*}
-    sub cairo_scale(cairo_t $ctx, num $sx, num $sy)
+    sub cairo_scale(cairo_t $ctx, num64 $sx, num64 $sy)
         is native($cairolib)
         {*}
-    sub cairo_rotate(cairo_t $ctx, num $angle)
+    sub cairo_rotate(cairo_t $ctx, num64 $angle)
         is native($cairolib)
         {*}
 
