@@ -1,11 +1,11 @@
 module Cairo {
 
-my Str $cairolib;
+my $cairolib;
 BEGIN {
     if $*VM.config<dll> ~~ /dll/ {
         $cairolib = 'libcairo-2';
     } else {
-        $cairolib = 'libcairo';
+        $cairolib = ('cairo', v2);
     }
 }
 
