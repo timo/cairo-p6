@@ -11,22 +11,22 @@ BEGIN {
 
 use NativeCall;
 
-class cairo_t is repr('CPointer') { }
+our class cairo_t is repr('CPointer') { }
 
-class cairo_surface_t is repr('CPointer') { }
+our class cairo_surface_t is repr('CPointer') { }
 
-class cairo_pattern_t is repr('CPointer') { }
+our class cairo_pattern_t is repr('CPointer') { }
 
-class cairo_matrix_t is repr('CPointer') { }
+our class cairo_matrix_t is repr('CPointer') { }
 
-class cairo_rectangle_t is repr('CPointer') { }
+our class cairo_rectangle_t is repr('CPointer') { }
 
-class cairo_path_t is repr('CPointer') { }
+our class cairo_path_t is repr('CPointer') { }
 
-class Surface { ... }
-class Image { ... }
-class Pattern { ... }
-class Context { ... }
+our class Surface { ... }
+our class Image { ... }
+our class Pattern { ... }
+our class Context { ... }
 
 our enum Format (
      FORMAT_INVALID => -1,
