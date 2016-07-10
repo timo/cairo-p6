@@ -16,4 +16,6 @@ lives-ok {
     }
 };
 
+unlink "foobar.png"; # don't care if failed
+
 done-testing;
