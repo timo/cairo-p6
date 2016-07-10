@@ -1,0 +1,13 @@
+language: perl6
+perl6:
+  - latest
+addons:
+  apt:
+    packages:
+      - libcairo2
+install:
+  - rakudobrew build-panda
+  - panda installdeps .
+script:
+  - prove -v -e 'perl6 -Ilib' t/
+sudo: false
