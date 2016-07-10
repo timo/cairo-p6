@@ -1,10 +1,10 @@
-Cairo 2D Graphics library binding for Perl 6
-============================================
+use v6;
+use Cairo;
+use Test;
 
-Synopsis
---------
+plan 1;
 
-    use Cairo;
+lives-ok {
     given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
         given Cairo::Context.new($_) {
             .rgb(0, 0.7, 0.9);
@@ -14,5 +14,8 @@ Synopsis
         };
         .write_png("foobar.png")
     }
+};
 
+unlink "foobar.png"; # don't care if failed
 
+done-testing;
