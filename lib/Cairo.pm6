@@ -140,6 +140,18 @@ our enum Antialias <
     ANTIALIAS_BEST
 >;
 
+our enum FontWeight <
+    FONT_WEIGHT_NORMAL
+    FONT_WEIGHT_BOLD
+>;
+
+our enum FontSlant <
+    FONT_SLANT_NORMAL
+    FONT_SLANT_ITALIC
+    FONT_SLANT_OBLIQUE
+>;
+
+
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
     is native($cairolib)
@@ -442,6 +454,45 @@ class Context {
         is native($cairolib)
         {*}
 
+
+    sub cairo_select_font_face(cairo_t $ctx, Str $family, int32 $slant, int32 $weight)
+        is native($cairolib)
+        {*}
+
+    sub cairo_set_font_size(cairo_t $ctx, num64 $size)
+        is native($cairolib)
+        {*}
+
+    sub cairo_show_text(cairo_t $ctx, Str $utf8)
+        is native($cairolib)
+        {*}
+
+    class TextExtents is repr('CStruct') {
+        has num64 $.x-bearing;
+        has num64 $.y-bearing;
+        has num64 $.width;
+        has num64 $.height;
+        has num64 $.x-advance;
+        has num64 $.y-advance;
+    }
+
+    sub cairo_text_extents(cairo_t $ctx, Str $utf8, TextExtents $extents)
+        is native($cairolib)
+        {*}
+
+    class FontExtents is repr('CStruct') {
+        has num64 $.ascent;
+        has num64 $.descent;
+        has num64 $.height;
+        has num64 $.max-x-advance;
+        has num64 $.max-y-advance;
+    }
+
+    sub cairo_font_extents(cairo_t $ctx, FontExtents $extents)
+        is native($cairolib)
+        {*}
+
+
     has cairo_t $!context;
 
     multi method new(cairo_t $context) {
@@ -610,6 +661,45 @@ class Context {
     multi method rotate(Cool $angle) {
         cairo_rotate($!context, $angle.Num)
     }
+
+    multi method select_font_face(str $family, int32 $slant, int32 $weight) {
+        cairo_select_font_face($!context, $family, $slant, $weight);
+    }
+    multi method select_font_face(Str(Cool) $family, Int(Cool) $slant, Int(Cool) $weight) {
+        cairo_select_font_face($!context, $family, $slant, $weight);
+    }
+
+    multi method set_font_size(num $size) {
+        cairo_set_font_size($!context, $size);
+    }
+    multi method set_font_size(Num(Cool) $size) {
+        cairo_set_font_size($!context, $size);
+    }
+
+    multi method show_text(str $text) {
+        cairo_show_text($!context, $text);
+    }
+    multi method show_text(Str(Cool) $text) {
+        cairo_show_text($!context, $text);
+    }
+
+    multi method text_extents(str $text --> TextExtents) {
+        my TextExtents $extents .= new;
+        cairo_text_extents($!context, $text, $extents);
+        $extents;
+    }
+    multi method text_extents(Str(Cool) $text --> TextExtents) {
+        my TextExtents $extents .= new;
+        cairo_text_extents($!context, $text, $extents);
+	$extents;
+    }
+
+    method font_extents {
+        my FontExtents $extents .= new;
+        cairo_font_extents($!context, $extents);
+	$extents;
+    }
+
 
     method line_cap() {
         Proxy.new:
