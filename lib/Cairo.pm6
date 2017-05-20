@@ -348,6 +348,10 @@ class Context {
         is native($cairolib)
         {*}
 
+    sub cairo_new_path(cairo_t $context)
+        is native($cairolib)
+        {*}
+
     sub cairo_rectangle(cairo_t $ctx, num64 $x, num64 $y, num64 $w, num64 $h)
         is native($cairolib)
         {*}
@@ -375,6 +379,10 @@ class Context {
         {*}
     sub cairo_get_line_width(cairo_t $context)
         returns num64
+        is native($cairolib)
+        {*}
+
+    sub cairo_set_dash(cairo_t $context, CArray[num64] $dashes, int32 $len, num64 $offset)
         is native($cairolib)
         {*}
 
@@ -464,6 +472,10 @@ class Context {
         {*}
 
     sub cairo_show_text(cairo_t $ctx, Str $utf8)
+        is native($cairolib)
+        {*}
+
+    sub cairo_text_path(cairo_t $ctx, Str $utf8)
         is native($cairolib)
         {*}
 
@@ -634,6 +646,10 @@ class Context {
         cairo_close_path($!context);
     }
 
+    method new_path() {
+        cairo_new_path($!context);
+    }
+
     multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
         cairo_rectangle($!context, $x.Num, $y.Num, $w.Num, $h.Num);
     }
@@ -683,6 +699,13 @@ class Context {
         cairo_show_text($!context, $text);
     }
 
+    multi method text_path(str $text) {
+        cairo_text_path($!context, $text);
+    }
+    multi method text_path(Str(Cool) $text) {
+        cairo_text_path($!context, $text);
+    }
+
     multi method text_extents(str $text --> TextExtents) {
         my TextExtents $extents .= new;
         cairo_text_extents($!context, $text, $extents);
@@ -700,6 +723,15 @@ class Context {
 	$extents;
     }
 
+    multi method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset) {
+        cairo_set_dash($!context, $dashes, $len, $offset);
+    }
+    multi method set_dash(List $dashes, Int(Cool) $len, Num(Cool) $offset) {
+        my $d = CArray[num64].new;
+        $d[$_] = $dashes[$_].Num
+            for 0 ..^ $len;
+        cairo_set_dash($!context, $d, $len, $offset);
+    }
 
     method line_cap() {
         Proxy.new:
