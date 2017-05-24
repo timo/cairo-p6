@@ -6,8 +6,8 @@ addons:
     packages:
       - libcairo2
 install:
-  - rakudobrew build zef
-  - zef --depsonly install .
+  - rakudobrew build-panda
+  - panda installdeps .
 script:
   - prove -v -e 'perl6 -Ilib' t/
 sudo: false
