@@ -124,6 +124,12 @@ our enum LineCap <
     LINE_CAP_SQUARE
 >;
 
+our enum LineJoin <
+    LINE_JOIN_MITER
+    LINE_JOIN_ROUND
+    LINE_JOIN_BEVEL
+>;
+
 our enum Content (
     CONTENT_COLOR => 0x1000,
     CONTENT_ALPHA => 0x2000,
@@ -370,6 +376,15 @@ class Context {
         {*}
 
     sub cairo_get_line_cap(cairo_t $context)
+        returns int32
+        is native($cairolib)
+        {*}
+
+    sub cairo_set_line_join(cairo_t $context, int32 $join)
+        is native($cairolib)
+        {*}
+
+    sub cairo_get_line_join(cairo_t $context)
         returns int32
         is native($cairolib)
         {*}
@@ -739,9 +754,15 @@ class Context {
             STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
     }
 
+    method line_join() {
+        Proxy.new:
+            FETCH => { LineJoin(cairo_get_line_join($!context)) },
+            STORE => -> \c, \value { cairo_set_line_join($!context, value.Int) }
+    }
+
     method operator() {
         Proxy.new:
-            FETCH => { LineCap(cairo_get_operator($!context)) },
+            FETCH => { Operator(cairo_get_operator($!context)) },
             STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
     }
     method antialias() {
