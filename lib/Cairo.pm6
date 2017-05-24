@@ -736,13 +736,13 @@ class Context {
     multi method text_extents(Str(Cool) $text --> TextExtents) {
         my TextExtents $extents .= new;
         cairo_text_extents($!context, $text, $extents);
-	$extents;
+        $extents;
     }
 
     method font_extents {
         my FontExtents $extents .= new;
         cairo_font_extents($!context, $extents);
-	$extents;
+        $extents;
     }
 
     multi method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset) {
