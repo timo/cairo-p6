@@ -657,6 +657,13 @@ class Context {
         cairo_arc($!context, $xc, $yc, $radius, $angle1, $angle2);
     }
 
+    multi method arc_negative(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
+        cairo_arc_negative($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+    }
+    multi method arc_negative(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
+        cairo_arc_negative($!context, $xc, $yc, $radius, $angle1, $angle2);
+    }
+
     method close_path() {
         cairo_close_path($!context);
     }
