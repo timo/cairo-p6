@@ -13,13 +13,13 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
             .show_text("Hello World");
         }
         my $font-extents = .font_extents;
-        isa-ok $font-extents, Cairo::Context::FontExtents;
+        isa-ok $font-extents, Cairo::cairo_font_extents_t;
         is-approx $font-extents.ascent, 9, 'font extents ascent';
         is-approx $font-extents.descent, 3, 'font extents descent';
         is-approx $font-extents.height, 12, 'font extents height';
 
         my $text-extents = .text_extents("Hello World");
-        isa-ok $text-extents, Cairo::Context::TextExtents;
+        isa-ok $text-extents, Cairo::cairo_text_extents_t;
         is-approx $text-extents.width, 67, 'text extents width';
         is-approx $text-extents.height, 7, 'text extents height';
     };

@@ -27,6 +27,23 @@ our class cairo_rectangle_t is repr('CPointer') { }
 
 our class cairo_path_t is repr('CPointer') { }
 
+our class cairo_text_extents_t is repr('CStruct') {
+    has num64 $.x-bearing;
+    has num64 $.y-bearing;
+    has num64 $.width;
+    has num64 $.height;
+    has num64 $.x-advance;
+    has num64 $.y-advance;
+}
+
+our class cairo_font_extents_t is repr('CStruct') {
+    has num64 $.ascent;
+    has num64 $.descent;
+    has num64 $.height;
+    has num64 $.max-x-advance;
+    has num64 $.max-y-advance;
+}
+
 our class Surface { ... }
 our class Image { ... }
 our class Pattern { ... }
@@ -510,28 +527,11 @@ class Context {
         is native($cairolib)
         {*}
 
-    class TextExtents is repr('CStruct') {
-        has num64 $.x-bearing;
-        has num64 $.y-bearing;
-        has num64 $.width;
-        has num64 $.height;
-        has num64 $.x-advance;
-        has num64 $.y-advance;
-    }
-
-    sub cairo_text_extents(cairo_t $ctx, Str $utf8, TextExtents $extents)
+    sub cairo_text_extents(cairo_t $ctx, Str $utf8, cairo_text_extents_t $extents)
         is native($cairolib)
         {*}
 
-    class FontExtents is repr('CStruct') {
-        has num64 $.ascent;
-        has num64 $.descent;
-        has num64 $.height;
-        has num64 $.max-x-advance;
-        has num64 $.max-y-advance;
-    }
-
-    sub cairo_font_extents(cairo_t $ctx, FontExtents $extents)
+    sub cairo_font_extents(cairo_t $ctx, cairo_font_extents_t $extents)
         is native($cairolib)
         {*}
 
@@ -752,19 +752,19 @@ class Context {
         cairo_text_path($!context, $text);
     }
 
-    multi method text_extents(str $text --> TextExtents) {
-        my TextExtents $extents .= new;
+    multi method text_extents(str $text --> cairo_text_extents_t) {
+        my cairo_text_extents_t $extents .= new;
         cairo_text_extents($!context, $text, $extents);
         $extents;
     }
-    multi method text_extents(Str(Cool) $text --> TextExtents) {
-        my TextExtents $extents .= new;
+    multi method text_extents(Str(Cool) $text --> cairo_text_extents_t) {
+        my cairo_text_extents_t $extents .= new;
         cairo_text_extents($!context, $text, $extents);
         $extents;
     }
 
     method font_extents {
-        my FontExtents $extents .= new;
+        my cairo_font_extents_t $extents .= new;
         cairo_font_extents($!context, $extents);
         $extents;
     }
