@@ -17,7 +17,11 @@ our class cairo_surface_t is repr('CPointer') { }
 
 our class cairo_pattern_t is repr('CPointer') { }
 
-our class cairo_matrix_t is repr('CPointer') { }
+our class cairo_matrix_t is repr('CStruct') {
+    has num64 $.xx; has num64 $.yx;
+    has num64 $.xy; has num64 $.yy;
+    has num64 $.x0; has num64 $.y0;
+};
 
 our class cairo_rectangle_t is repr('CPointer') { }
 
@@ -464,6 +468,18 @@ class Context {
     sub cairo_rotate(cairo_t $ctx, num64 $angle)
         is native($cairolib)
         {*}
+    sub cairo_transform(cairo_t $ctx, cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
+    sub cairo_identity_matrix(cairo_t $ctx)
+        is native($cairolib)
+        {*}
+    sub cairo_set_matrix(cairo_t $ctx, cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
+    sub cairo_get_matrix(cairo_t $ctx, cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
 
     sub cairo_save(cairo_t $ctx)
         is native($cairolib)
@@ -693,11 +709,19 @@ class Context {
         cairo_scale($!context, $sx.Num, $sy.Num)
     }
 
+    method identity_matrix {
+        cairo_identity_matrix($!context);
+    }
+
     multi method rotate(num $angle) {
         cairo_rotate($!context, $angle)
     }
     multi method rotate(Cool $angle) {
         cairo_rotate($!context, $angle.Num)
+    }
+
+    method transform(cairo_matrix_t $matrix) {
+        cairo_transform($!context, $matrix)
     }
 
     multi method select_font_face(str $family, int32 $slant, int32 $weight) {
@@ -782,6 +806,16 @@ class Context {
         Proxy.new:
             FETCH => { cairo_get_line_width($!context) },
             STORE => -> \c, \value { cairo_set_line_width($!context, value.Num) }
+    }
+
+    method matrix() {
+        Proxy.new:
+            FETCH => {
+                my cairo_matrix_t $matrix .= new;
+                cairo_get_matrix($!context, $matrix);
+                $matrix;
+            },
+            STORE => -> \c, cairo_matrix_t \matrix { cairo_set_matrix($!context, matrix) }
     }
 }
 
