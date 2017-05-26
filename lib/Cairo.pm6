@@ -178,15 +178,6 @@ our enum FontSlant <
     FONT_SLANT_OBLIQUE
 >;
 
-our enum PatternType <
-    CAIRO_PATTERN_TYPE_SOLID
-    CAIRO_PATTERN_TYPE_SURFACE
-    CAIRO_PATTERN_TYPE_LINEAR
-    CAIRO_PATTERN_TYPE_RADIAL
-    CAIRO_PATTERN_TYPE_MESH
-    CAIRO_PATTERN_TYPE_RASTER_SOURCE
->;
-
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
     is native($cairolib)
@@ -295,6 +286,14 @@ class Image {
     }
 }
 
+class Pattern::Solid { ... }
+class Pattern::Surface { ... }
+class Pattern::Gradient { ... }
+class Pattern::Gradient::Linear { ... }
+class Pattern::Gradient::Radial { ... }
+class Pattern::Mesh { ... }
+class Pattern::RasterSource { ... }
+
 class Pattern {
 
     sub cairo_pattern_destroy(cairo_pattern_t $pat)
@@ -333,83 +332,74 @@ class Pattern {
 
     has $.pattern;
 
-    my role Gradient {
-
-        sub cairo_pattern_add_color_stop_rgb(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b)
-            returns int32
-            is native($cairolib)
-            {*}
-
-        sub cairo_pattern_add_color_stop_rgba(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b, num64 $a)
-            returns int32
-            is native($cairolib)
-            {*}
-
-        method add_color_stop_rgb(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
-            cairo_pattern_add_color_stop_rgb($.pattern, $offset, $r, $g, $b);
-        }
-
-        method add_color_stop_rgba(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
-            cairo_pattern_add_color_stop_rgba($.pattern, $offset, $r, $g, $b, $a);
-        }
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_SOLID] {
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_SURFACE] {
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_LINEAR]
-        does Gradient {
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_RADIAL]
-        does Gradient {
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_MESH] {
-    }
-
-    role Type[CAIRO_PATTERN_TYPE_RASTER_SOURCE] {
-    }
-
     multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
     }
 
-    submethod TWEAK {
-        self.^mixin: Type[self.type];
-    }
-
     method create_rgb(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
-        self.new: cairo_pattern_create_rgb($r, $g, $b);
+        Pattern::Solid.new: cairo_pattern_create_rgb($r, $g, $b);
     }
 
     method create_rgba(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
-        self.new: cairo_pattern_create_rgba($r, $g, $b, $a);
+        Pattern::Solid.new: cairo_pattern_create_rgba($r, $g, $b, $a);
     }
 
     method create_for_surface(cairo_surface_t $surface) {
-        self.new: cairo_pattern_create_for_surface($surface);
+        Pattern::Surface.new: cairo_pattern_create_for_surface($surface);
     }
 
     method create_linear(Num(Cool) $x0, Num(Cool) $y0, Num(Cool) $x1, Num(Cool) $y1) {
-        self.new: cairo_pattern_create_linear($x0, $y0, $x1, $y1);
+        Pattern::Gradient::Linear.new: cairo_pattern_create_linear($x0, $y0, $x1, $y1);
     }
 
     method create_radial(Num(Cool) $cx0, Num(Cool) $cy0, Num(Cool) $r0,
                          Num(Cool) $cx1, Num(Cool) $cy1, Num(Cool) $r1) {
-        self.new: cairo_pattern_create_radial($cx0, $cy0, $r0, $cx1, $cy1, $r1);
-    }
-
-    method type {
-        PatternType(cairo_pattern_get_type($!pattern));
+        Pattern::Gradient::Radial.new: cairo_pattern_create_radial($cx0, $cy0, $r0, $cx1, $cy1, $r1);
     }
 
     method destroy() {
         cairo_pattern_destroy($!pattern);
     }
+}
+
+class Pattern::Solid is Pattern {
+}
+
+class Pattern::Surface is Pattern {
+}
+
+class Pattern::Gradient is Pattern {
+
+    sub cairo_pattern_add_color_stop_rgb(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b)
+        returns int32
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_add_color_stop_rgba(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b, num64 $a)
+        returns int32
+        is native($cairolib)
+        {*}
+
+    method add_color_stop_rgb(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
+        cairo_pattern_add_color_stop_rgb($.pattern, $offset, $r, $g, $b);
+    }
+
+    method add_color_stop_rgba(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
+        cairo_pattern_add_color_stop_rgba($.pattern, $offset, $r, $g, $b, $a);
+    }
+
+}
+
+class Pattern::Gradient::Linear is Pattern::Gradient {
+}
+
+class Pattern::Gradient::Radial is Pattern::Gradient {
+}
+
+class Pattern::Mesh is Pattern {
+}
+
+class Pattern::RasterSource is Pattern {
 }
 
 class Context {
