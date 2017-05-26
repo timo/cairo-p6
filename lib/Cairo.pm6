@@ -178,6 +178,14 @@ our enum FontSlant <
     FONT_SLANT_OBLIQUE
 >;
 
+our enum PatternType <
+    CAIRO_PATTERN_TYPE_SOLID
+    CAIRO_PATTERN_TYPE_SURFACE
+    CAIRO_PATTERN_TYPE_LINEAR
+    CAIRO_PATTERN_TYPE_RADIAL
+    CAIRO_PATTERN_TYPE_MESH
+    CAIRO_PATTERN_TYPE_RASTER_SOURCE
+>;
 
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
@@ -288,14 +296,115 @@ class Image {
 }
 
 class Pattern {
+
     sub cairo_pattern_destroy(cairo_pattern_t $pat)
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_for_surface(cairo_surface_t $surface)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_linear(num64 $x0, num64 $y0, num64 $x1, num64 $y1)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_radial(num64 $cx0, num64 $cy0, num64 $r0, num64 $cx1, num64 $cy1, num64 $r1)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_rgb(num64 $r, num64 $g, num64 $b)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_rgba(num64 $r, num64 $g, num64 $b, num64 $a)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_get_type(cairo_pattern_t $pat)
+        returns int32
         is native($cairolib)
         {*}
 
     has $.pattern;
 
-    method new($pattern) {
+    my role Gradient {
+
+        sub cairo_pattern_add_color_stop_rgb(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b)
+            returns int32
+            is native($cairolib)
+            {*}
+
+        sub cairo_pattern_add_color_stop_rgba(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b, num64 $a)
+            returns int32
+            is native($cairolib)
+            {*}
+
+        method add_color_stop_rgb(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
+            cairo_pattern_add_color_stop_rgb($.pattern, $offset, $r, $g, $b);
+        }
+
+        method add_color_stop_rgba(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
+            cairo_pattern_add_color_stop_rgba($.pattern, $offset, $r, $g, $b, $a);
+        }
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_SOLID] {
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_SURFACE] {
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_LINEAR]
+        does Gradient {
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_RADIAL]
+        does Gradient {
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_MESH] {
+    }
+
+    role Type[CAIRO_PATTERN_TYPE_RASTER_SOURCE] {
+    }
+
+    multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
+    }
+
+    submethod TWEAK {
+        self.^mixin: Type[self.type];
+    }
+
+    method create_rgb(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
+        self.new: cairo_pattern_create_rgb($r, $g, $b);
+    }
+
+    method create_rgba(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
+        self.new: cairo_pattern_create_rgba($r, $g, $b, $a);
+    }
+
+    method create_for_surface(cairo_surface_t $surface) {
+        self.new: cairo_pattern_create_for_surface($surface);
+    }
+
+    method create_linear(Num(Cool) $x0, Num(Cool) $y0, Num(Cool) $x1, Num(Cool) $y1) {
+        self.new: cairo_pattern_create_linear($x0, $y0, $x1, $y1);
+    }
+
+    method create_radial(Num(Cool) $cx0, Num(Cool) $cy0, Num(Cool) $r0,
+                         Num(Cool) $cx1, Num(Cool) $cy1, Num(Cool) $r1) {
+        self.new: cairo_pattern_create_radial($cx0, $cy0, $r0, $cx1, $cy1, $r1);
+    }
+
+    method type {
+        PatternType(cairo_pattern_get_type($!pattern));
     }
 
     method destroy() {
@@ -389,6 +498,10 @@ class Context {
         {*}
 
     sub cairo_set_source_rgba(cairo_t $context, num64 $r, num64 $g, num64 $b, num64 $a)
+        is native($cairolib)
+        {*}
+
+    sub cairo_set_source(cairo_t $context, cairo_pattern_t $pat)
         is native($cairolib)
         {*}
 
@@ -606,6 +719,9 @@ class Context {
         cairo_set_source_rgba($!context, $r, $g, $b, $a);
     }
 
+    method pattern(Pattern $pat) {
+        cairo_set_source($!context, $pat.pattern);
+    }
 
     method set_source_surface(Surface $surface, Cool $x = 0, Cool $y = 0) {
         cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
