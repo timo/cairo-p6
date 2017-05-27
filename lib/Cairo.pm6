@@ -291,37 +291,10 @@ class Pattern::Surface { ... }
 class Pattern::Gradient { ... }
 class Pattern::Gradient::Linear { ... }
 class Pattern::Gradient::Radial { ... }
-class Pattern::Mesh { ... }
-class Pattern::RasterSource { ... }
 
 class Pattern {
 
     sub cairo_pattern_destroy(cairo_pattern_t $pat)
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_create_for_surface(cairo_surface_t $surface)
-        returns cairo_pattern_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_create_linear(num64 $x0, num64 $y0, num64 $x1, num64 $y1)
-        returns cairo_pattern_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_create_radial(num64 $cx0, num64 $cy0, num64 $r0, num64 $cx1, num64 $cy1, num64 $r1)
-        returns cairo_pattern_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_create_rgb(num64 $r, num64 $g, num64 $b)
-        returns cairo_pattern_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_create_rgba(num64 $r, num64 $g, num64 $b, num64 $a)
-        returns cairo_pattern_t
         is native($cairolib)
         {*}
 
@@ -336,36 +309,43 @@ class Pattern {
         self.bless(:$pattern)
     }
 
-    method create_rgb(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
-        Pattern::Solid.new: cairo_pattern_create_rgb($r, $g, $b);
-    }
-
-    method create_rgba(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
-        Pattern::Solid.new: cairo_pattern_create_rgba($r, $g, $b, $a);
-    }
-
-    method create_for_surface(cairo_surface_t $surface) {
-        Pattern::Surface.new: cairo_pattern_create_for_surface($surface);
-    }
-
-    method create_linear(Num(Cool) $x0, Num(Cool) $y0, Num(Cool) $x1, Num(Cool) $y1) {
-        Pattern::Gradient::Linear.new: cairo_pattern_create_linear($x0, $y0, $x1, $y1);
-    }
-
-    method create_radial(Num(Cool) $cx0, Num(Cool) $cy0, Num(Cool) $r0,
-                         Num(Cool) $cx1, Num(Cool) $cy1, Num(Cool) $r1) {
-        Pattern::Gradient::Radial.new: cairo_pattern_create_radial($cx0, $cy0, $r0, $cx1, $cy1, $r1);
-    }
-
     method destroy() {
         cairo_pattern_destroy($!pattern);
     }
 }
 
 class Pattern::Solid is Pattern {
+
+    sub cairo_pattern_create_rgb(num64 $r, num64 $g, num64 $b)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_create_rgba(num64 $r, num64 $g, num64 $b, num64 $a)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    multi method create(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
+        self.new: cairo_pattern_create_rgb($r, $g, $b);
+    }
+
+    multi method create(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
+        self.new: cairo_pattern_create_rgba($r, $g, $b, $a);
+    }
+
 }
 
 class Pattern::Surface is Pattern {
+    sub cairo_pattern_create_for_surface(cairo_surface_t $surface)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    method create(cairo_surface_t $surface) {
+        self.new: cairo_pattern_create_for_surface($surface);
+    }
+
 }
 
 class Pattern::Gradient is Pattern {
@@ -391,15 +371,29 @@ class Pattern::Gradient is Pattern {
 }
 
 class Pattern::Gradient::Linear is Pattern::Gradient {
+
+    sub cairo_pattern_create_linear(num64 $x0, num64 $y0, num64 $x1, num64 $y1)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
+
+    method create(Num(Cool) $x0, Num(Cool) $y0, Num(Cool) $x1, Num(Cool) $y1) {
+        self.new: cairo_pattern_create_linear($x0, $y0, $x1, $y1);
+    }
+
 }
 
 class Pattern::Gradient::Radial is Pattern::Gradient {
-}
+    sub cairo_pattern_create_radial(num64 $cx0, num64 $cy0, num64 $r0, num64 $cx1, num64 $cy1, num64 $r1)
+        returns cairo_pattern_t
+        is native($cairolib)
+        {*}
 
-class Pattern::Mesh is Pattern {
-}
+    method create(Num(Cool) $cx0, Num(Cool) $cy0, Num(Cool) $r0,
+                  Num(Cool) $cx1, Num(Cool) $cy1, Num(Cool) $r1) {
+        self.new: cairo_pattern_create_radial($cx0, $cy0, $r0, $cx1, $cy1, $r1);
+    }
 
-class Pattern::RasterSource is Pattern {
 }
 
 class Context {
