@@ -200,15 +200,6 @@ class Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_image_surface_get_data(cairo_surface_t $surface)
-        returns OpaquePointer
-        is native($cairolib)
-        {*}
-    sub cairo_image_surface_get_stride(cairo_surface_t $surface)
-        returns int32
-        is native($cairolib)
-        {*}
-
     method write_png(Str $filename) {
         my $result = cairo_surface_write_to_png($!surface, $filename);
         fail cairo_status_t($result) if $result != STATUS_SUCCESS;
@@ -221,9 +212,6 @@ class Surface {
         $ctx.destroy();
         return self;
     }
-
-    method data()   { cairo_image_surface_get_data($!surface) }
-    method stride() { cairo_image_surface_get_stride($!surface) }
 
     method reference() { cairo_surface_reference($!surface) }
     method destroy  () { cairo_surface_destroy($!surface) }
@@ -250,7 +238,7 @@ class RecordingSurface {
     }
 }
 
-class Image {
+class Image is Surface {
     sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
         is native($cairolib)
@@ -261,8 +249,46 @@ class Image {
         is native($cairolib)
         {*}
 
+    class StreamClosure is repr('CStruct') is rw {
+        has CArray[uint8] $!buf;
+        has size_t $.buf-len;
+        has size_t $.n-read;
+        method TWEAK(CArray :$buf!) { $!buf := $buf }
+        method buf-pointer(--> Pointer[uint8]) {
+            nativecast(Pointer[uint8], $!buf);
+        }
+        method read-pointer(--> Pointer) {
+            Pointer[uint8].new: +$.buf-pointer + $!n-read;
+        }
+    }
+
+    sub cairo_image_surface_create_from_png_stream(&read-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+
+    sub cairo_image_surface_get_data(cairo_surface_t $surface)
+        returns OpaquePointer
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_get_stride(cairo_surface_t $surface)
+        returns int32
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_get_width(cairo_surface_t $surface)
+        returns int32
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_get_height(cairo_surface_t $surface)
+        returns int32
+        is native($cairolib)
+        {*}
+    sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
+        is native($cairolib)
+        {*}
+
     multi method create(Format $format, Cool $width, Cool $height) {
-        return Surface.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
+        return self.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
     multi method create(Format $format, Cool $width, Cool $height, Blob[uint8] $data, Cool $stride?) {
@@ -271,7 +297,22 @@ class Image {
         } elsif $stride eqv True {
             $stride = cairo_format_stride_for_width($format.Int, $width.Int);
         }
-        return Surface.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
+        return self.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
+    }
+
+    multi method create(Blob[uint8] $data, Int(Cool) $buf-len = $data.elems) {
+
+        my $buf = CArray[uint8].new: $data;
+        my $closure = StreamClosure.new: :$buf, :$buf-len, :n-read(0);
+        sub read-func(StreamClosure $closure, Pointer $out, uint32 $len --> int32) {
+            return STATUS_READ_ERROR
+                if $len > $closure.buf-len - $closure.n-read;
+
+            memcpy($out, $closure.read-pointer, $len);
+            $closure.n-read += $len;
+            return STATUS_SUCCESS;
+        }
+        return self.new(surface => cairo_image_surface_create_from_png_stream(&read-func, $closure));
     }
 
     method record(&things, Cool $width?, Cool $height?, Format $format = FORMAT_ARGB32) {
@@ -284,6 +325,11 @@ class Image {
             die "recording surfaces are currently NYI. please specify a width and height for your Cairo::Image.";
         }
     }
+
+    method data()   { cairo_image_surface_get_data($.surface) }
+    method stride() { cairo_image_surface_get_stride($.surface) }
+    method width()  { cairo_image_surface_get_width($.surface) }
+    method height() { cairo_image_surface_get_height($.surface) }
 }
 
 class Pattern::Solid { ... }
@@ -572,6 +618,9 @@ class Context {
     sub cairo_paint(cairo_t $ctx)
         is native($cairolib)
         {*}
+    sub cairo_paint_with_alpha(cairo_t $ctx, num64 $alpha)
+        is native($cairolib)
+        {*}
 
     sub cairo_translate(cairo_t $ctx, num64 $tx, num64 $ty)
         is native($cairolib)
@@ -747,6 +796,12 @@ class Context {
         cairo_paint($!context)
     }
 
+    multi method paint_with_alpha( num64 $alpha) {
+        cairo_paint_with_alpha($!context, $alpha)
+    }
+    multi method paint_with_alpha( Num(Cool) $alpha) {
+        cairo_paint_with_alpha($!context, $alpha)
+    }
 
     multi method move_to(Cool $x, Cool $y) {
         cairo_move_to($!context, $x.Num, $y.Num);
