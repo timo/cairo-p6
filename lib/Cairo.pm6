@@ -196,6 +196,14 @@ class Surface {
         is native($cairolib)
         {*}
 
+    sub cairo_surface_show_page(cairo_surface_t $surface)
+        is native($cairolib)
+        {*}
+
+    sub cairo_surface_finish(cairo_surface_t $surface)
+        is native($cairolib)
+        {*}
+
     sub cairo_surface_destroy(cairo_surface_t $surface)
         is native($cairolib)
         {*}
@@ -213,8 +221,35 @@ class Surface {
         return self;
     }
 
+    method show_page { cairo_surface_show_page($.surface) }
+    method finish { cairo_surface_finish($.surface) }
+
     method reference() { cairo_surface_reference($!surface) }
     method destroy  () { cairo_surface_destroy($!surface) }
+}
+
+class Surface::PDF is Surface {
+    sub cairo_pdf_surface_create(str $filename, num64 $width, num64 $height)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+
+    has Num $.width;
+    has Num $.height;
+
+    multi method create(str $filename, num64 $width, num64 $height) {
+        return self.new(
+            surface => cairo_pdf_surface_create($filename, $width, $height),
+            :$width, :$height,
+            )
+    }
+    multi method create(Str(Cool) $filename, Num(Cool) $width, Num(Cool) $height) {
+        return self.new(
+            surface => cairo_pdf_surface_create($filename, $width, $height),
+            :$width, :$height,
+            )
+    }
+
 }
 
 class RecordingSurface {
@@ -260,7 +295,15 @@ class Image is Surface {
         method read-pointer(--> Pointer) {
             Pointer[uint8].new: +$.buf-pointer + $!n-read;
         }
-    }
+        our sub read(StreamClosure $closure, Pointer $out, uint32 $len --> int32) {
+            return STATUS_READ_ERROR
+                if $len > $closure.buf-len - $closure.n-read;
+
+            memcpy($out, $closure.read-pointer, $len);
+            $closure.n-read += $len;
+            return STATUS_SUCCESS;
+        }
+     }
 
     sub cairo_image_surface_create_from_png_stream(&read-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
         returns cairo_surface_t
@@ -304,15 +347,7 @@ class Image is Surface {
 
         my $buf = CArray[uint8].new: $data;
         my $closure = StreamClosure.new: :$buf, :$buf-len, :n-read(0);
-        sub read-func(StreamClosure $closure, Pointer $out, uint32 $len --> int32) {
-            return STATUS_READ_ERROR
-                if $len > $closure.buf-len - $closure.n-read;
-
-            memcpy($out, $closure.read-pointer, $len);
-            $closure.n-read += $len;
-            return STATUS_SUCCESS;
-        }
-        return self.new(surface => cairo_image_surface_create_from_png_stream(&read-func, $closure));
+        return self.new(surface => cairo_image_surface_create_from_png_stream(&StreamClosure::read, $closure));
     }
 
     method record(&things, Cool $width?, Cool $height?, Format $format = FORMAT_ARGB32) {
