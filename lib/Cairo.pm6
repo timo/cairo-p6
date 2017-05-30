@@ -178,6 +178,13 @@ our enum FontSlant <
     FONT_SLANT_OBLIQUE
 >;
 
+our enum Extend <
+    EXTEND_NONE
+    EXTEND_REPEAT
+    EXTEND_REFLECT
+    CAIRO_EXTEND_PAD
+>;
+
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
     is native($cairolib)
@@ -379,8 +386,12 @@ class Pattern {
         is native($cairolib)
         {*}
 
-    sub cairo_pattern_get_type(cairo_pattern_t $pat)
+    sub cairo_pattern_get_extend(cairo_pattern_t $pat)
         returns int32
+        is native($cairolib)
+        {*}
+
+    sub cairo_pattern_set_extend(cairo_pattern_t $pat, uint32 $extend)
         is native($cairolib)
         {*}
 
@@ -388,6 +399,12 @@ class Pattern {
 
     multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
+    }
+
+    method extend() {
+        Proxy.new:
+            FETCH => { Extend(cairo_pattern_get_extend($!pattern)) },
+            STORE => -> \c, \value { cairo_pattern_set_extend($!pattern, value.Int) }
     }
 
     method destroy() {
@@ -986,6 +1003,7 @@ class Context {
             FETCH => { Operator(cairo_get_operator($!context)) },
             STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
     }
+
     method antialias() {
         Proxy.new:
             FETCH => { Antialias(cairo_get_antialias($!context)) },
