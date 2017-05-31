@@ -21,6 +21,25 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xx; has num64 $.yx;
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
+
+    sub cairo_matrix_init_identity(cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
+
+    sub cairo_matrix_init_scale(cairo_matrix_t $matrix, num64 $sx, num64 $sy)
+        is native($cairolib)
+        {*}
+
+    multi method init(:$identity!) {
+        cairo_matrix_init_identity(self);
+        return self;
+    }
+
+    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale!) {
+        cairo_matrix_init_scale(self, $sx, $sy);
+        return self;
+    }
+
 };
 
 our class cairo_rectangle_t is repr('CPointer') { }
@@ -185,6 +204,11 @@ our enum Extend <
     CAIRO_EXTEND_PAD
 >;
 
+our enum FillRule <
+    FILL_RULE_WINDING
+    FILL_RULE_EVEN_ODD
+>;
+
 sub cairo_format_stride_for_width(int32 $format, int32 $width)
     returns int32
     is native($cairolib)
@@ -312,6 +336,11 @@ class Image is Surface {
         }
      }
 
+    sub cairo_image_surface_create_from_png(Str $filename)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+
     sub cairo_image_surface_create_from_png_stream(&read-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
         returns cairo_surface_t
         is native($cairolib)
@@ -357,6 +386,13 @@ class Image is Surface {
         return self.new(surface => cairo_image_surface_create_from_png_stream(&StreamClosure::read, $closure));
     }
 
+    multi method open(str $filename) {
+        return self.new(surface => cairo_image_surface_create_from_png($filename));
+    }
+    multi method open(Str(Cool) $filename) {
+        return self.new(surface => cairo_image_surface_create_from_png($filename));
+    }
+
     method record(&things, Cool $width?, Cool $height?, Format $format = FORMAT_ARGB32) {
         if defined $width and defined $height {
             my $surface = self.create($format, $width, $height);
@@ -395,6 +431,13 @@ class Pattern {
         is native($cairolib)
         {*}
 
+    sub cairo_pattern_set_matrix(cairo_pattern_t $ctx, cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
+    sub cairo_pattern_get_matrix(cairo_pattern_t $ctx, cairo_matrix_t $matrix)
+        is native($cairolib)
+        {*}
+
     has $.pattern;
 
     multi method new(cairo_pattern_t $pattern) {
@@ -405,6 +448,16 @@ class Pattern {
         Proxy.new:
             FETCH => { Extend(cairo_pattern_get_extend($!pattern)) },
             STORE => -> \c, \value { cairo_pattern_set_extend($!pattern, value.Int) }
+    }
+
+    method matrix() {
+        Proxy.new:
+            FETCH => {
+                my cairo_matrix_t $matrix .= new;
+                cairo_pattern_get_matrix($!pattern, $matrix);
+                $matrix;
+            },
+            STORE => -> \c, cairo_matrix_t \matrix { cairo_pattern_set_matrix($!pattern, matrix) }
     }
 
     method destroy() {
@@ -505,6 +558,11 @@ class Context {
         {*}
 
 
+    sub cairo_new_sub_path(cairo_t $ctx)
+        returns cairo_path_t
+        is native($cairolib)
+        {*}
+
     sub cairo_copy_path(cairo_t $ctx)
         returns cairo_path_t
         is native($cairolib)
@@ -601,6 +659,15 @@ class Context {
         {*}
 
     sub cairo_get_line_join(cairo_t $context)
+        returns int32
+        is native($cairolib)
+        {*}
+
+    sub cairo_set_fill_rule(cairo_t $context, int32 $cap)
+        is native($cairolib)
+        {*}
+
+    sub cairo_get_fill_rule(cairo_t $context)
         returns int32
         is native($cairolib)
         {*}
@@ -768,6 +835,9 @@ class Context {
         cairo_pop_group_to_source($!context);
     }
 
+    method sub_path() {
+        cairo_new_sub_path($!context);
+    }
     multi method copy_path() {
         cairo_copy_path($!context);
     }
@@ -873,18 +943,18 @@ class Context {
         cairo_curve_to($!context, $x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
     }
 
+    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2, :$negative!) {
+        cairo_arc_negative($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+    }
+    multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2, :$negative!) {
+        cairo_arc_negative($!context, $xc, $yc, $radius, $angle1, $angle2);
+    }
+
     multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
         cairo_arc($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
     }
     multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
         cairo_arc($!context, $xc, $yc, $radius, $angle1, $angle2);
-    }
-
-    multi method arc_negative(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
-        cairo_arc_negative($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
-    }
-    multi method arc_negative(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
-        cairo_arc_negative($!context, $xc, $yc, $radius, $angle1, $angle2);
     }
 
     method close_path() {
@@ -990,6 +1060,12 @@ class Context {
         Proxy.new:
             FETCH => { LineCap(cairo_get_line_cap($!context)) },
             STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
+    }
+
+    method fill_rule() {
+        Proxy.new:
+            FETCH => { LineCap(cairo_get_fill_rule($!context)) },
+            STORE => -> \c, \value { cairo_set_fill_rule($!context, value.Int) }
     }
 
     method line_join() {
