@@ -16,3 +16,4 @@ Synopsis
     }
 
 
+Please see the `examples` folder.
