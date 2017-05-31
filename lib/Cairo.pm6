@@ -17,6 +17,27 @@ our class cairo_surface_t is repr('CPointer') { }
 
 our class cairo_pattern_t is repr('CPointer') { }
 
+our class cairo_rectangle_t is repr('CPointer') { }
+
+our class cairo_path_t is repr('CPointer') { }
+
+our class cairo_text_extents_t is repr('CStruct') {
+    has num64 $.x_bearing;
+    has num64 $.y_bearing;
+    has num64 $.width;
+    has num64 $.height;
+    has num64 $.x_advance;
+    has num64 $.y_advance;
+}
+
+our class cairo_font_extents_t is repr('CStruct') {
+    has num64 $.ascent;
+    has num64 $.descent;
+    has num64 $.height;
+    has num64 $.max_x_advance;
+    has num64 $.max_y_advance;
+}
+
 our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xx; has num64 $.yx;
     has num64 $.xy; has num64 $.yy;
@@ -30,37 +51,16 @@ our class cairo_matrix_t is repr('CStruct') {
         is native($cairolib)
         {*}
 
-    multi method init(:$identity!) {
+    multi method init(:$identity! where .so) {
         cairo_matrix_init_identity(self);
         return self;
     }
 
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale!) {
+    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale where .so) {
         cairo_matrix_init_scale(self, $sx, $sy);
         return self;
     }
 
-};
-
-our class cairo_rectangle_t is repr('CPointer') { }
-
-our class cairo_path_t is repr('CPointer') { }
-
-our class cairo_text_extents_t is repr('CStruct') {
-    has num64 $.x-bearing;
-    has num64 $.y-bearing;
-    has num64 $.width;
-    has num64 $.height;
-    has num64 $.x-advance;
-    has num64 $.y-advance;
-}
-
-our class cairo_font_extents_t is repr('CStruct') {
-    has num64 $.ascent;
-    has num64 $.descent;
-    has num64 $.height;
-    has num64 $.max-x-advance;
-    has num64 $.max-y-advance;
 }
 
 our class Surface { ... }
@@ -841,7 +841,7 @@ class Context {
     multi method copy_path() {
         cairo_copy_path($!context);
     }
-    multi method copy_path(:$flat!) {
+    multi method copy_path(:$flat! where .so) {
         cairo_copy_path_flat($!context);
     }
     method append_path($path) {
@@ -901,16 +901,16 @@ class Context {
     multi method stroke {
         cairo_stroke($!context)
     }
-    multi method fill(:$preserve!) {
+    multi method fill(:$preserve! where .so) {
         cairo_fill_preserve($!context);
     }
-    multi method stroke(:$preserve!) {
+    multi method stroke(:$preserve! where .so) {
         cairo_stroke_preserve($!context);
     }
     multi method clip {
         cairo_clip($!context);
     }
-    multi method clip(:$preserve!) {
+    multi method clip(:$preserve! where .so) {
         cairo_clip_preserve($!context);
     }
 
@@ -932,10 +932,10 @@ class Context {
         cairo_line_to($!context, $x.Num, $y.Num);
     }
 
-    multi method move_to(Cool $x, Cool $y, :$relative!) {
+    multi method move_to(Cool $x, Cool $y, :$relative! where .so) {
         cairo_rel_move_to($!context, $x.Num, $y.Num);
     }
-    multi method line_to(Cool $x, Cool $y, :$relative!) {
+    multi method line_to(Cool $x, Cool $y, :$relative! where .so) {
         cairo_rel_line_to($!context, $x.Num, $y.Num);
     }
 
@@ -943,10 +943,10 @@ class Context {
         cairo_curve_to($!context, $x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
     }
 
-    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2, :$negative!) {
+    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2, :$negative! where .so) {
         cairo_arc_negative($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
     }
-    multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2, :$negative!) {
+    multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2, :$negative! where .so) {
         cairo_arc_negative($!context, $xc, $yc, $radius, $angle1, $angle2);
     }
 
