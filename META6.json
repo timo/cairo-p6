@@ -5,6 +5,7 @@
     "version" : "v0.2",
     "depends" : [ ],
     "source-url" : "git://github.com/timo/cairo-p6.git",
+    "tags"          : [ "png", "pdf", "svg" ],
     "provides" : {
       "Cairo" : "lib/Cairo.pm6"
     },
