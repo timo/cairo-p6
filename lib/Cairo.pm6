@@ -283,6 +283,30 @@ class Surface::PDF is Surface {
 
 }
 
+class Surface::SVG is Surface {
+    sub cairo_svg_surface_create(str $filename, num64 $width, num64 $height)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+
+    has Num $.width;
+    has Num $.height;
+
+    multi method create(str $filename, num64 $width, num64 $height) {
+        return self.new(
+            surface => cairo_svg_surface_create($filename, $width, $height),
+            :$width, :$height,
+            )
+    }
+    multi method create(Str(Cool) $filename, Num(Cool) $width, Num(Cool) $height) {
+        return self.new(
+            surface => cairo_svg_surface_create($filename, $width, $height),
+            :$width, :$height,
+            )
+    }
+
+}
+
 class RecordingSurface {
     sub cairo_recording_surface_create(int32 $content, cairo_rectangle_t $extents)
         returns cairo_surface_t
