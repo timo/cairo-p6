@@ -43,6 +43,10 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
 
+    method new(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
+        self.bless( :$xx, :$yx, :$yx, :$yy, :$x0, :$y0 );
+    }
+
     sub cairo_matrix_init_identity(cairo_matrix_t $matrix)
         is native($cairolib)
         {*}
