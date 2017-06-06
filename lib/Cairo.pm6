@@ -56,7 +56,7 @@ our class cairo_matrix_t is repr('CStruct') {
         return self;
     }
 
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale where .so) {
+    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale! where .so) {
         cairo_matrix_init_scale(self, $sx, $sy);
         return self;
     }
