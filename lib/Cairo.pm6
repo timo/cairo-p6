@@ -43,8 +43,14 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
 
-    method new(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
-        self.bless( :$xx, :$yx, :$yx, :$yy, :$x0, :$y0 );
+    multi method new(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
+        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
+    }
+
+    multi method new(Num(Cool) $xx = 1e0, Num(Cool) $yx = 0e0,
+                     Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
+                     Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
+        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
     }
 
     sub cairo_matrix_init_identity(cairo_matrix_t $matrix)
@@ -52,6 +58,14 @@ our class cairo_matrix_t is repr('CStruct') {
         {*}
 
     sub cairo_matrix_init_scale(cairo_matrix_t $matrix, num64 $sx, num64 $sy)
+        is native($cairolib)
+        {*}
+
+    sub cairo_matrix_init_translate(cairo_matrix_t $matrix, num64 $tx, num64 $ty)
+        is native($cairolib)
+        {*}
+
+    sub cairo_matrix_init(cairo_matrix_t $matrix, num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
         is native($cairolib)
         {*}
 
@@ -65,6 +79,16 @@ our class cairo_matrix_t is repr('CStruct') {
         return self;
     }
 
+    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
+        cairo_matrix_init_translate(self, $sx, $sy);
+        return self;
+    }
+
+    multi method init(Num(Cool) $xx, Num(Cool) $yx,
+                      Num(Cool) $xy, Num(Cool) $yy,
+                      Num(Cool) $x0, Num(Cool) $y0) is default {
+        cairo_matrix_init( self, $xx, $yx, $xy, $yy, $x0, $y0 );
+    }
 }
 
 our class Surface { ... }
