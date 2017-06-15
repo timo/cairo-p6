@@ -13,7 +13,36 @@ use NativeCall;
 
 our class cairo_t is repr('CPointer') { }
 
-our class cairo_surface_t is repr('CPointer') { }
+our class cairo_surface_t is repr('CPointer') {
+
+    method write_to_png(Str $filename)
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_surface_write_to_png')
+        {*}
+
+    method reference
+        returns cairo_surface_t
+        is native($cairolib)
+        is symbol('cairo_surface_reference')
+        {*}
+
+    method show_page
+        is native($cairolib)
+        is symbol('cairo_surface_show_page')
+        {*}
+
+    method finish
+        is native($cairolib)
+        is symbol('cairo_surface_finish')
+        {*}
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_surface_destroy')
+        {*}
+
+}
 
 our class cairo_pattern_t is repr('CPointer') { }
 
@@ -243,32 +272,10 @@ sub cairo_format_stride_for_width(int32 $format, int32 $width)
     {*}
 
 class Surface {
-    has $.surface;
-
-    sub cairo_surface_write_to_png(cairo_surface_t $surface, Str $filename)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_reference(cairo_surface_t $surface)
-        returns cairo_surface_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_show_page(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_finish(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_destroy(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
+    has $.surface handles <reference destroy finish show_page>;
 
     method write_png(Str $filename) {
-        my $result = cairo_surface_write_to_png($!surface, $filename);
+        my $result = $!surface.write_to_png($filename);
         fail cairo_status_t($result) if $result != STATUS_SUCCESS;
         cairo_status_t($result);
     }
@@ -280,11 +287,6 @@ class Surface {
         return self;
     }
 
-    method show_page { cairo_surface_show_page($.surface) }
-    method finish { cairo_surface_finish($.surface) }
-
-    method reference() { cairo_surface_reference($!surface) }
-    method destroy  () { cairo_surface_destroy($!surface) }
 }
 
 class Surface::PDF is Surface {
