@@ -72,54 +72,29 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
 
-    multi method new(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
-        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
-    }
-
-    multi method new(Num(Cool) $xx = 1e0, Num(Cool) $yx = 0e0,
-                     Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
-                     Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
-        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
-    }
-
-    sub cairo_matrix_init_identity(cairo_matrix_t $matrix)
+    method init_identity
         is native($cairolib)
+        is symbol('cairo_matrix_init_identity')
         {*}
 
-    sub cairo_matrix_init_scale(cairo_matrix_t $matrix, num64 $sx, num64 $sy)
+    method init_scale(num64 $sx, num64 $sy)
         is native($cairolib)
+        is symbol('cairo_matrix_init_scale')
         {*}
 
-    sub cairo_matrix_init_translate(cairo_matrix_t $matrix, num64 $tx, num64 $ty)
+    method init_translate(num64 $tx, num64 $ty)
         is native($cairolib)
+        is symbol('cairo_matrix_init_translate')
         {*}
 
-    sub cairo_matrix_init(cairo_matrix_t $matrix, num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
+    method init(num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
         is native($cairolib)
+        is symbol('cairo_matrix_init')
         {*}
 
-    multi method init(:$identity! where .so) {
-        cairo_matrix_init_identity(self);
-        return self;
-    }
-
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale! where .so) {
-        cairo_matrix_init_scale(self, $sx, $sy);
-        return self;
-    }
-
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
-        cairo_matrix_init_translate(self, $sx, $sy);
-        return self;
-    }
-
-    multi method init(Num(Cool) $xx, Num(Cool) $yx,
-                      Num(Cool) $xy, Num(Cool) $yy,
-                      Num(Cool) $x0, Num(Cool) $y0) is default {
-        cairo_matrix_init( self, $xx, $yx, $xy, $yy, $x0, $y0 );
-    }
 }
 
+our class Matrix { ... }
 our class Surface { ... }
 our class Image { ... }
 our class Pattern { ... }
@@ -271,8 +246,42 @@ sub cairo_format_stride_for_width(int32 $format, int32 $width)
     is native($cairolib)
     {*}
 
+class Matrix {
+    has cairo_matrix_t $.matrix handles <
+        xx yx xy yy x0 y0
+    > .= new: :xx(1e0), :yy(1e0);
+
+    method init_identity {
+        $!matrix.init_identity;
+        self;
+    }
+
+    method init_scale(Num(Cool) $sx, Num(Cool) $sy) {
+        $!matrix.init_scale($sx, $sy);
+        self;
+    }
+
+    method init_translate(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
+        $!matrix.init_translate($sx, $sy);
+        self;
+    }
+
+    multi method init(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
+        $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
+        self;
+    }
+
+    multi method init(Num(Cool) $xx, Num(Cool) $yx = 0e0,
+                      Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
+                      Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
+        $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
+        self;
+    }
+
+}
+
 class Surface {
-    has $.surface handles <reference destroy finish show_page>;
+    has cairo_surface_t $.surface handles <reference destroy finish show_page>;
 
     method write_png(Str $filename) {
         my $result = $!surface.write_to_png($filename);
@@ -509,9 +518,9 @@ class Pattern {
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
                 cairo_pattern_get_matrix($!pattern, $matrix);
-                $matrix;
+                Cairo::Matrix.new: :$matrix;
             },
-            STORE => -> \c, cairo_matrix_t \matrix { cairo_pattern_set_matrix($!pattern, matrix) }
+            STORE => -> \c, Cairo::Matrix \matrix { cairo_pattern_set_matrix($!pattern, matrix.matrix) }
     }
 
     method destroy() {
@@ -1051,8 +1060,8 @@ class Context {
         cairo_rotate($!context, $angle.Num)
     }
 
-    method transform(cairo_matrix_t $matrix) {
-        cairo_transform($!context, $matrix)
+    method transform(Matrix $matrix) {
+        cairo_transform($!context, $matrix.matrix)
     }
 
     multi method select_font_face(str $family, int32 $slant, int32 $weight) {
@@ -1151,9 +1160,9 @@ class Context {
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
                 cairo_get_matrix($!context, $matrix);
-                $matrix;
+                Matrix.new: :$matrix;
             },
-            STORE => -> \c, cairo_matrix_t \matrix { cairo_set_matrix($!context, matrix) }
+            STORE => -> \c, Matrix \matrix { cairo_set_matrix($!context, matrix.matrix) }
     }
 }
 
