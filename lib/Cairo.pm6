@@ -974,15 +974,15 @@ class Context {
         }
     }
 
-    multi method rgb(Cool $r, Cool $g, Cool $b) {
-        $!context.set_source_rgb($r.Num, $g.Num, $b.Num);
+    multi method rgb(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
+        $!context.set_source_rgb($r, $g, $b);
     }
     multi method rgb(num $r, num $g, num $b) {
         $!context.set_source_rgb($r, $g, $b);
     }
 
-    multi method rgba(Cool $r, Cool $g, Cool $b, Cool $a) {
-        $!context.set_source_rgba($r.Num, $g.Num, $b.Num, $a.Num);
+    multi method rgba(Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
+        $!context.set_source_rgba($r, $g, $b, $a);
     }
     multi method rgb(num $r, num $g, num $b, num $a) {
         $!context.set_source_rgba($r, $g, $b, $a);
@@ -992,18 +992,18 @@ class Context {
         $!context.set_source($pat.pattern);
     }
 
-    method set_source_surface(Surface $surface, Cool $x = 0, Cool $y = 0) {
-        $!context.set_source_surface($surface.surface, $x.Num, $y.Num)
+    method set_source_surface(Surface $surface, Num(Cool) $x = 0, Num(Cool) $y = 0) {
+        $!context.set_source_surface($surface.surface, $x, $y)
     }
 
-    multi method mask(Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
-        $!context.mask($pat.pattern, $sx.Num, $sy.Num)
+    multi method mask(Pattern $pat, Num(Cool) $sx = 0, Num(Cool) $sy = 0) {
+        $!context.mask($pat.pattern, $sx, $sy)
     }
     multi method mask(Pattern $pat, num $sx = 0e0, num $sy = 0e0) {
         $!context.mask($pat.pattern, $sx, $sy)
     }
-    multi method mask(Surface $surface, Cool $sx = 0, Cool $sy = 0) {
-        $!context.mask_surface($surface.surface, $sx.Num, $sy.Num)
+    multi method mask(Surface $surface, Num(Cool) $sx = 0, Num(Cool) $sy = 0) {
+        $!context.mask_surface($surface.surface, $sx, $sy)
     }
     multi method mask(Surface $surface, num $sx = 0e0, num $sy = 0e0) {
         $!context.mask_surface($surface.surface, $sx, $sy)
@@ -1031,44 +1031,44 @@ class Context {
     multi method paint_with_alpha( num64 $alpha) {
         $!context.paint_with_alpha($alpha)
     }
-    multi method paint_with_alpha( Num(Cool) $alpha) {
+    multi method paint_with_alpha( Num(Num(Cool)) $alpha) {
         $!context.paint_with_alpha($alpha)
     }
 
-    multi method move_to(Cool $x, Cool $y) {
-        $!context.move_to($x.Num, $y.Num);
+    multi method move_to(Num(Cool) $x, Num(Cool) $y) {
+        $!context.move_to($x, $y);
     }
-    multi method line_to(Cool $x, Cool $y) {
-        $!context.line_to($x.Num, $y.Num);
-    }
-
-    multi method move_to(Cool $x, Cool $y, :$relative! where .so) {
-        $!context.rel_move_to($x.Num, $y.Num);
-    }
-    multi method line_to(Cool $x, Cool $y, :$relative! where .so) {
-        $!context.rel_line_to($x.Num, $y.Num);
+    multi method line_to(Num(Cool) $x, Num(Cool) $y) {
+        $!context.line_to($x, $y);
     }
 
-    multi method curve_to(Cool $x1, Cool $y1, Cool $x2, Cool $y2, Cool $x3, Cool $y3) {
-        $!context.curve_to($x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
+    multi method move_to(Num(Cool) $x, Num(Cool) $y, :$relative! where .so) {
+        $!context.rel_move_to($x, $y);
+    }
+    multi method line_to(Num(Cool) $x, Num(Cool) $y, :$relative! where .so) {
+        $!context.rel_line_to($x, $y);
     }
 
-    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2, :$negative! where .so) {
-        $!context.arc_negative($xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+    multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3) {
+        $!context.curve_to($x1, $y1, $x2, $y2, $x3, $y3);
+    }
+
+    multi method arc(Num(Cool) $xc, Num(Cool) $yc, Num(Cool) $radius, Num(Cool) $angle1, Num(Cool) $angle2, :$negative! where .so) {
+        $!context.arc_negative($xc, $yc, $radius, $angle1, $angle2);
     }
     multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2, :$negative! where .so) {
         $!context.arc_negative($xc, $yc, $radius, $angle1, $angle2);
     }
 
-    multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
-        $!context.arc($xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+    multi method arc(Num(Cool) $xc, Num(Cool) $yc, Num(Cool) $radius, Num(Cool) $angle1, Num(Cool) $angle2) {
+        $!context.arc($xc, $yc, $radius, $angle1, $angle2);
     }
     multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
         $!context.arc($xc, $yc, $radius, $angle1, $angle2);
     }
 
-    multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
-        $!context.rectangle($x.Num, $y.Num, $w.Num, $h.Num);
+    multi method rectangle(Num(Cool) $x, Num(Cool) $y, Num(Cool) $w, Num(Cool) $h) {
+        $!context.rectangle($x, $y, $w, $h);
     }
     multi method rectangle(num $x, num $y, num $w, num $h) {
         $!context.rectangle($x, $y, $w, $h);
@@ -1077,22 +1077,22 @@ class Context {
     multi method translate(num $tx, num $ty) {
         $!context.translate($tx, $ty)
     }
-    multi method translate(Cool $tx, Cool $ty) {
-        $!context.translate($tx.Num, $ty.Num)
+    multi method translate(Num(Cool) $tx, Num(Cool) $ty) {
+        $!context.translate($tx, $ty)
     }
 
     multi method scale(num $sx, num $sy) {
         $!context.scale($sx, $sy)
     }
-    multi method scale(Cool $sx, Cool $sy) {
-        $!context.scale($sx.Num, $sy.Num)
+    multi method scale(Num(Cool) $sx, Num(Cool) $sy) {
+        $!context.scale($sx, $sy)
     }
 
     multi method rotate(num $angle) {
         $!context.rotate($angle)
     }
-    multi method rotate(Cool $angle) {
-        $!context.rotate($angle.Num)
+    multi method rotate(Num(Cool) $angle) {
+        $!context.rotate($angle)
     }
 
     method transform(Matrix $matrix) {
