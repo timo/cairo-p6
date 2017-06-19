@@ -7,7 +7,7 @@
     "source-url" : "git://github.com/timo/cairo-p6.git",
     "tags"          : [ "png", "pdf", "svg" ],
     "provides" : {
-      "Cairo" : "lib/Cairo.pm6"
+      "Cairo" : "lib/Cairo.pm6",
       "Cairo::Antialias" : "lib/Cairo.pm6",
       "Cairo::Content" : "lib/Cairo.pm6",
       "Cairo::Context" : "lib/Cairo.pm6",
