@@ -11,11 +11,58 @@ BEGIN {
 
 use NativeCall;
 
-our class cairo_t is repr('CPointer') { }
 
-our class cairo_surface_t is repr('CPointer') { }
+our class cairo_surface_t is repr('CPointer') {
 
-our class cairo_pattern_t is repr('CPointer') { }
+    method write_to_png(Str $filename)
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_surface_write_to_png')
+        {*}
+
+    method reference
+        returns cairo_surface_t
+        is native($cairolib)
+        is symbol('cairo_surface_reference')
+        {*}
+
+    method show_page
+        is native($cairolib)
+        is symbol('cairo_surface_show_page')
+        {*}
+
+    method finish
+        is native($cairolib)
+        is symbol('cairo_surface_finish')
+        {*}
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_surface_destroy')
+        {*}
+
+    method get_image_data
+        returns OpaquePointer
+        is native($cairolib)
+        is symbol('cairo_image_surface_get_data')
+        {*}
+    method get_image_stride
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_image_surface_get_stride')
+        {*}
+    method get_image_width
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_image_surface_get_width')
+        {*}
+    method get_image_height
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_image_surface_get_height')
+        {*}
+
+}
 
 our class cairo_rectangle_t is repr('CPointer') { }
 
@@ -43,54 +90,382 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
 
-    multi method new(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
-        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
-    }
-
-    multi method new(Num(Cool) $xx = 1e0, Num(Cool) $yx = 0e0,
-                     Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
-                     Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
-        self.bless( :$xx, :$yx, :$xy, :$yy, :$x0, :$y0 );
-    }
-
-    sub cairo_matrix_init_identity(cairo_matrix_t $matrix)
+    method init_identity
         is native($cairolib)
+        is symbol('cairo_matrix_init_identity')
         {*}
 
-    sub cairo_matrix_init_scale(cairo_matrix_t $matrix, num64 $sx, num64 $sy)
+    method init_scale(num64 $sx, num64 $sy)
         is native($cairolib)
+        is symbol('cairo_matrix_init_scale')
         {*}
 
-    sub cairo_matrix_init_translate(cairo_matrix_t $matrix, num64 $tx, num64 $ty)
+    method init_translate(num64 $tx, num64 $ty)
         is native($cairolib)
+        is symbol('cairo_matrix_init_translate')
         {*}
 
-    sub cairo_matrix_init(cairo_matrix_t $matrix, num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
+    method init(num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
         is native($cairolib)
+        is symbol('cairo_matrix_init')
         {*}
 
-    multi method init(:$identity! where .so) {
-        cairo_matrix_init_identity(self);
-        return self;
-    }
-
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$scale! where .so) {
-        cairo_matrix_init_scale(self, $sx, $sy);
-        return self;
-    }
-
-    multi method init(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
-        cairo_matrix_init_translate(self, $sx, $sy);
-        return self;
-    }
-
-    multi method init(Num(Cool) $xx, Num(Cool) $yx,
-                      Num(Cool) $xy, Num(Cool) $yy,
-                      Num(Cool) $x0, Num(Cool) $y0) is default {
-        cairo_matrix_init( self, $xx, $yx, $xy, $yy, $x0, $y0 );
-    }
 }
 
+our class cairo_pattern_t is repr('CPointer') {
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_pattern_destroy')
+        {*}
+
+    method get_extend
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_pattern_get_extend')
+        {*}
+
+    method set_extend(uint32 $extend)
+        is native($cairolib)
+        is symbol('cairo_pattern_set_extend')
+        {*}
+
+    method set_matrix(cairo_matrix_t $matrix)
+        is native($cairolib)
+        is symbol('cairo_pattern_set_matrix')
+        {*}
+
+    method get_matrix(cairo_matrix_t $matrix)
+        is native($cairolib)
+        is symbol('cairo_pattern_get_matrix')
+        {*}
+
+    method add_color_stop_rgb(num64 $offset, num64 $r, num64 $g, num64 $b)
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_pattern_add_color_stop_rgb')
+        {*}
+
+    method add_color_stop_rgba(num64 $offset, num64 $r, num64 $g, num64 $b, num64 $a)
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_pattern_add_color_stop_rgba')
+        {*}
+
+}
+
+our class cairo_t is repr('CPointer') {
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_destroy')
+        {*}
+
+    method sub_path
+        returns cairo_path_t
+        is native($cairolib)
+        is symbol('cairo_new_sub_path')
+        {*}
+
+    method copy_path
+        returns cairo_path_t
+        is native($cairolib)
+        is symbol('cairo_copy_path')
+        {*}
+
+    method copy_path_flat
+        returns cairo_path_t
+        is native($cairolib)
+        is symbol('cairo_copy_path_flat')
+        {*}
+
+    method append_path(cairo_path_t $path)
+        returns cairo_path_t
+        is native($cairolib)
+        is symbol('cairo_append_path')
+        {*}
+
+
+    method push_group
+        is native($cairolib)
+        is symbol('cairo_push_group')
+        {*}
+
+    method pop_group
+        returns cairo_pattern_t
+        is native($cairolib)
+        is symbol('cairo_pop_group')
+        {*}
+
+    method pop_group_to_source
+        is native($cairolib)
+        is symbol('cairo_pop_group_to_source')
+        {*}
+
+
+    method line_to(num64 $x, num64 $y)
+        is native($cairolib)
+        is symbol('cairo_line_to')
+        {*}
+
+    method move_to(num64 $x, num64 $y)
+        is native($cairolib)
+        is symbol('cairo_move_to')
+        {*}
+
+    method rel_line_to(num64 $x, num64 $y)
+        is native($cairolib)
+        is symbol('cairo_rel_line_to')
+        {*}
+
+    method rel_move_to(num64 $x, num64 $y)
+        is native($cairolib)
+        is symbol('cairo_rel_move_to')
+        {*}
+
+    method curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
+        is native($cairolib)
+        is symbol('cairo_curve_to')
+        {*}
+
+    method arc(num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
+        is native($cairolib)
+        is symbol('cairo_arc')
+        {*}
+    method arc_negative(num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
+        is native($cairolib)
+        is symbol('cairo_arc_negative')
+        {*}
+
+    method close_path
+        is native($cairolib)
+        is symbol('cairo_close_path')
+        {*}
+
+    method new_path
+        is native($cairolib)
+        is symbol('cairo_new_path')
+        {*}
+
+    method rectangle(num64 $x, num64 $y, num64 $w, num64 $h)
+        is native($cairolib)
+        is symbol('cairo_rectangle')
+        {*}
+
+
+    method set_source_rgb(num64 $r, num64 $g, num64 $b)
+        is native($cairolib)
+        is symbol('cairo_set_source_rgb')
+        {*}
+
+    method set_source_rgba(num64 $r, num64 $g, num64 $b, num64 $a)
+        is native($cairolib)
+        is symbol('cairo_set_source_rgba')
+        {*}
+
+    method set_source(cairo_pattern_t $pat)
+        is native($cairolib)
+        is symbol('cairo_set_source')
+        {*}
+
+    method set_line_cap(int32 $cap)
+        is native($cairolib)
+        is symbol('cairo_set_line_cap')
+        {*}
+
+    method get_line_cap
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_get_line_cap')
+        {*}
+
+    method set_line_join(int32 $join)
+        is native($cairolib)
+        is symbol('cairo_set_line_join')
+        {*}
+
+    method get_line_join
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_get_line_join')
+        {*}
+
+    method set_fill_rule(int32 $cap)
+        is native($cairolib)
+        is symbol('cairo_set_fill_rule')
+        {*}
+
+    method get_fill_rule
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_get_fill_rule')
+        {*}
+
+    method set_line_width(num64 $width)
+        is native($cairolib)
+        is symbol('cairo_set_line_width')
+        {*}
+    method get_line_width
+        returns num64
+        is native($cairolib)
+        is symbol('cairo_get_line_width')
+        {*}
+
+    method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset)
+        is native($cairolib)
+        is symbol('cairo_set_dash')
+        {*}
+
+    method get_operator
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_get_operator')
+        {*}
+    method set_operator(int32 $op)
+        is native($cairolib)
+        is symbol('cairo_set_operator')
+        {*}
+
+    method get_antialias
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_get_antialias')
+        {*}
+    method set_antialias(int32 $op)
+        is native($cairolib)
+        is symbol('cairo_set_antialias')
+        {*}
+
+    method set_source_surface(cairo_surface_t $surface, num64 $x, num64 $y)
+        is native($cairolib)
+        is symbol('cairo_set_source_surface')
+        {*}
+
+    method mask(cairo_pattern_t $pattern)
+        is native($cairolib)
+        is symbol('cairo_mask')
+        {*}
+    method mask_surface(cairo_surface_t $surface, num64 $sx, num64 $sy)
+        is native($cairolib)
+        is symbol('cairo_mask_surface')
+        {*}
+
+    method clip
+        is native($cairolib)
+        is symbol('cairo_clip')
+        {*}
+    method clip_preserve
+        is native($cairolib)
+        is symbol('cairo_clip_preserve')
+        {*}
+
+    method fill
+        is native($cairolib)
+        is symbol('cairo_fill')
+        {*}
+
+    method stroke
+        is native($cairolib)
+        is symbol('cairo_stroke')
+        {*}
+
+    method fill_preserve
+        is native($cairolib)
+        is symbol('cairo_fill_preserve')
+        {*}
+
+    method stroke_preserve
+        is native($cairolib)
+        is symbol('cairo_stroke_preserve')
+        {*}
+
+    method paint
+        is native($cairolib)
+        is symbol('cairo_paint')
+        {*}
+    method paint_with_alpha(num64 $alpha)
+        is native($cairolib)
+        is symbol('cairo_paint_with_alpha')
+        {*}
+
+    method translate(num64 $tx, num64 $ty)
+        is native($cairolib)
+        is symbol('cairo_translate')
+        {*}
+    method scale(num64 $sx, num64 $sy)
+        is native($cairolib)
+        is symbol('cairo_scale')
+        {*}
+    method rotate(num64 $angle)
+        is native($cairolib)
+        is symbol('cairo_rotate')
+        {*}
+    method transform(cairo_matrix_t $matrix)
+        is native($cairolib)
+        is symbol('cairo_transform')
+        {*}
+    method identity_matrix
+        is native($cairolib)
+        is symbol('cairo_identity_matrix')
+        {*}
+    method set_matrix(cairo_matrix_t $matrix)
+        is native($cairolib)
+        is symbol('cairo_set_matrix')
+        {*}
+    method get_matrix(cairo_matrix_t $matrix)
+        is native($cairolib)
+        is symbol('cairo_get_matrix')
+        {*}
+
+    method save
+        is native($cairolib)
+        is symbol('cairo_save')
+        {*}
+    method restore
+        is native($cairolib)
+        is symbol('cairo_restore')
+        {*}
+
+    method status
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_status')
+        {*}
+
+
+    method select_font_face(Str $family, int32 $slant, int32 $weight)
+        is native($cairolib)
+        is symbol('cairo_select_font_face')
+        {*}
+
+    method set_font_size(num64 $size)
+        is native($cairolib)
+        is symbol('cairo_set_font_size')
+        {*}
+
+    method show_text(Str $utf8)
+        is native($cairolib)
+        is symbol('cairo_show_text')
+        {*}
+
+    method text_path(Str $utf8)
+        is native($cairolib)
+        is symbol('cairo_text_path')
+        {*}
+
+    method text_extents(Str $utf8, cairo_text_extents_t $extents)
+        is native($cairolib)
+        is symbol('cairo_text_extents')
+        {*}
+
+    method font_extents(cairo_font_extents_t $extents)
+        is native($cairolib)
+        is symbol('cairo_font_extents')
+        {*}
+
+}
+
+our class Matrix { ... }
 our class Surface { ... }
 our class Image { ... }
 our class Pattern { ... }
@@ -237,38 +612,45 @@ our enum FillRule <
     FILL_RULE_EVEN_ODD
 >;
 
-sub cairo_format_stride_for_width(int32 $format, int32 $width)
-    returns int32
-    is native($cairolib)
-    {*}
+class Matrix {
+    has cairo_matrix_t $.matrix handles <
+        xx yx xy yy x0 y0
+    > .= new: :xx(1e0), :yy(1e0);
+
+    method init_identity {
+        $!matrix.init_identity;
+        self;
+    }
+
+    method init_scale(Num(Cool) $sx, Num(Cool) $sy) {
+        $!matrix.init_scale($sx, $sy);
+        self;
+    }
+
+    method init_translate(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
+        $!matrix.init_translate($sx, $sy);
+        self;
+    }
+
+    multi method init(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
+        $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
+        self;
+    }
+
+    multi method init(Num(Cool) $xx, Num(Cool) $yx = 0e0,
+                      Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
+                      Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
+        $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
+        self;
+    }
+
+}
 
 class Surface {
-    has $.surface;
-
-    sub cairo_surface_write_to_png(cairo_surface_t $surface, Str $filename)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_reference(cairo_surface_t $surface)
-        returns cairo_surface_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_show_page(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_finish(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
-
-    sub cairo_surface_destroy(cairo_surface_t $surface)
-        is native($cairolib)
-        {*}
+    has cairo_surface_t $.surface handles <reference destroy finish show_page>;
 
     method write_png(Str $filename) {
-        my $result = cairo_surface_write_to_png($!surface, $filename);
+        my $result = $!surface.write_to_png($filename);
         fail cairo_status_t($result) if $result != STATUS_SUCCESS;
         cairo_status_t($result);
     }
@@ -280,11 +662,6 @@ class Surface {
         return self;
     }
 
-    method show_page { cairo_surface_show_page($.surface) }
-    method finish { cairo_surface_finish($.surface) }
-
-    method reference() { cairo_surface_reference($!surface) }
-    method destroy  () { cairo_surface_destroy($!surface) }
 }
 
 class Surface::PDF is Surface {
@@ -398,22 +775,11 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_image_surface_get_data(cairo_surface_t $surface)
-        returns OpaquePointer
-        is native($cairolib)
-        {*}
-    sub cairo_image_surface_get_stride(cairo_surface_t $surface)
+    sub cairo_format_stride_for_width(int32 $format, int32 $width)
         returns int32
         is native($cairolib)
         {*}
-    sub cairo_image_surface_get_width(cairo_surface_t $surface)
-        returns int32
-        is native($cairolib)
-        {*}
-    sub cairo_image_surface_get_height(cairo_surface_t $surface)
-        returns int32
-        is native($cairolib)
-        {*}
+
     sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
         is native($cairolib)
         {*}
@@ -456,10 +822,10 @@ class Image is Surface {
         }
     }
 
-    method data()   { cairo_image_surface_get_data($.surface) }
-    method stride() { cairo_image_surface_get_stride($.surface) }
-    method width()  { cairo_image_surface_get_width($.surface) }
-    method height() { cairo_image_surface_get_height($.surface) }
+    method data()   { $.surface.get_image_data }
+    method stride() { $.surface.get_image_stride }
+    method width()  { $.surface.get_image_width }
+    method height() { $.surface.get_image_height }
 }
 
 class Pattern::Solid { ... }
@@ -470,27 +836,7 @@ class Pattern::Gradient::Radial { ... }
 
 class Pattern {
 
-    sub cairo_pattern_destroy(cairo_pattern_t $pat)
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_get_extend(cairo_pattern_t $pat)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_set_extend(cairo_pattern_t $pat, uint32 $extend)
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_set_matrix(cairo_pattern_t $ctx, cairo_matrix_t $matrix)
-        is native($cairolib)
-        {*}
-    sub cairo_pattern_get_matrix(cairo_pattern_t $ctx, cairo_matrix_t $matrix)
-        is native($cairolib)
-        {*}
-
-    has $.pattern;
+    has $.pattern handles <destroy>;
 
     multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
@@ -498,23 +844,20 @@ class Pattern {
 
     method extend() {
         Proxy.new:
-            FETCH => { Extend(cairo_pattern_get_extend($!pattern)) },
-            STORE => -> \c, \value { cairo_pattern_set_extend($!pattern, value.Int) }
+            FETCH => { Extend($!pattern.get_extend) },
+            STORE => -> \c, \value { $!pattern.set_extend(value.Int) }
     }
 
     method matrix() {
         Proxy.new:
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
-                cairo_pattern_get_matrix($!pattern, $matrix);
-                $matrix;
+                $!pattern.get_matrix;
+                Cairo::Matrix.new: :$matrix;
             },
-            STORE => -> \c, cairo_matrix_t \matrix { cairo_pattern_set_matrix($!pattern, matrix) }
+            STORE => -> \c, Cairo::Matrix \matrix { $!pattern.set_matrix(matrix.matrix) }
     }
 
-    method destroy() {
-        cairo_pattern_destroy($!pattern);
-    }
 }
 
 class Pattern::Solid is Pattern {
@@ -553,22 +896,12 @@ class Pattern::Surface is Pattern {
 
 class Pattern::Gradient is Pattern {
 
-    sub cairo_pattern_add_color_stop_rgb(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_pattern_add_color_stop_rgba(cairo_pattern_t $pat, num64 $offset, num64 $r, num64 $g, num64 $b, num64 $a)
-        returns int32
-        is native($cairolib)
-        {*}
-
     method add_color_stop_rgb(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b) {
-        cairo_pattern_add_color_stop_rgb($.pattern, $offset, $r, $g, $b);
+        $.pattern.add_color_stop_rgb($offset, $r, $g, $b);
     }
 
     method add_color_stop_rgba(Num(Cool) $offset, Num(Cool) $r, Num(Cool) $g, Num(Cool) $b, Num(Cool) $a) {
-        cairo_pattern_add_color_stop_rgba($.pattern, $offset, $r, $g, $b, $a);
+        $.pattern.add_color_stop_rgba($offset, $r, $g, $b, $a);
     }
 
 }
@@ -605,255 +938,10 @@ class Context {
         is native($cairolib)
         {*}
 
-    sub cairo_destroy(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-
-    sub cairo_new_sub_path(cairo_t $ctx)
-        returns cairo_path_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_copy_path(cairo_t $ctx)
-        returns cairo_path_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_copy_path_flat(cairo_t $ctx)
-        returns cairo_path_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_append_path(cairo_t $ctx, cairo_path_t $path)
-        returns cairo_path_t
-        is native($cairolib)
-        {*}
-
-
-    sub cairo_push_group(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_pop_group(cairo_t $ctx)
-        returns cairo_pattern_t
-        is native($cairolib)
-        {*}
-
-    sub cairo_pop_group_to_source(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-
-    sub cairo_line_to(cairo_t $context, num64 $x, num64 $y)
-        is native($cairolib)
-        {*}
-
-    sub cairo_move_to(cairo_t $context, num64 $x, num64 $y)
-        is native($cairolib)
-        {*}
-
-    sub cairo_rel_line_to(cairo_t $context, num64 $x, num64 $y)
-        is native($cairolib)
-        {*}
-
-    sub cairo_rel_move_to(cairo_t $context, num64 $x, num64 $y)
-        is native($cairolib)
-        {*}
-
-    sub cairo_curve_to(cairo_t $context, num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
-        is native($cairolib)
-        {*}
-
-    sub cairo_arc(cairo_t $context, num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
-        is native($cairolib)
-        {*}
-    sub cairo_arc_negative(cairo_t $context, num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
-        is native($cairolib)
-        {*}
-
-    sub cairo_close_path(cairo_t $context)
-        is native($cairolib)
-        {*}
-
-    sub cairo_new_path(cairo_t $context)
-        is native($cairolib)
-        {*}
-
-    sub cairo_rectangle(cairo_t $ctx, num64 $x, num64 $y, num64 $w, num64 $h)
-        is native($cairolib)
-        {*}
-
-
-    sub cairo_set_source_rgb(cairo_t $context, num64 $r, num64 $g, num64 $b)
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_source_rgba(cairo_t $context, num64 $r, num64 $g, num64 $b, num64 $a)
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_source(cairo_t $context, cairo_pattern_t $pat)
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_line_cap(cairo_t $context, int32 $cap)
-        is native($cairolib)
-        {*}
-
-    sub cairo_get_line_cap(cairo_t $context)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_line_join(cairo_t $context, int32 $join)
-        is native($cairolib)
-        {*}
-
-    sub cairo_get_line_join(cairo_t $context)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_fill_rule(cairo_t $context, int32 $cap)
-        is native($cairolib)
-        {*}
-
-    sub cairo_get_fill_rule(cairo_t $context)
-        returns int32
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_line_width(cairo_t $context, num64 $width)
-        is native($cairolib)
-        {*}
-    sub cairo_get_line_width(cairo_t $context)
-        returns num64
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_dash(cairo_t $context, CArray[num64] $dashes, int32 $len, num64 $offset)
-        is native($cairolib)
-        {*}
-
-    sub cairo_get_operator(cairo_t $context)
-        returns int32
-        is native($cairolib)
-        {*}
-    sub cairo_set_operator(cairo_t $context, int32 $op)
-        is native($cairolib)
-        {*}
-
-    sub cairo_get_antialias(cairo_t $context)
-        returns int32
-        is native($cairolib)
-        {*}
-    sub cairo_set_antialias(cairo_t $context, int32 $op)
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_source_surface(cairo_t $context, cairo_surface_t $surface, num64 $x, num64 $y)
-        is native($cairolib)
-        {*}
-
-    sub cairo_mask(cairo_t $context, cairo_pattern_t $pattern)
-        is native($cairolib)
-        {*}
-    sub cairo_mask_surface(cairo_t $context, cairo_surface_t $surface, num64 $sx, num64 $sy)
-        is native($cairolib)
-        {*}
-
-    sub cairo_clip(cairo_t $context)
-        is native($cairolib)
-        {*}
-    sub cairo_clip_preserve(cairo_t $context)
-        is native($cairolib)
-        {*}
-
-    sub cairo_fill(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_stroke(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_fill_preserve(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_stroke_preserve(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_paint(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-    sub cairo_paint_with_alpha(cairo_t $ctx, num64 $alpha)
-        is native($cairolib)
-        {*}
-
-    sub cairo_translate(cairo_t $ctx, num64 $tx, num64 $ty)
-        is native($cairolib)
-        {*}
-    sub cairo_scale(cairo_t $ctx, num64 $sx, num64 $sy)
-        is native($cairolib)
-        {*}
-    sub cairo_rotate(cairo_t $ctx, num64 $angle)
-        is native($cairolib)
-        {*}
-    sub cairo_transform(cairo_t $ctx, cairo_matrix_t $matrix)
-        is native($cairolib)
-        {*}
-    sub cairo_identity_matrix(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-    sub cairo_set_matrix(cairo_t $ctx, cairo_matrix_t $matrix)
-        is native($cairolib)
-        {*}
-    sub cairo_get_matrix(cairo_t $ctx, cairo_matrix_t $matrix)
-        is native($cairolib)
-        {*}
-
-    sub cairo_save(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-    sub cairo_restore(cairo_t $ctx)
-        is native($cairolib)
-        {*}
-
-    sub cairo_status(cairo_t $ctx)
-        returns int32
-        is native($cairolib)
-        {*}
-
-
-    sub cairo_select_font_face(cairo_t $ctx, Str $family, int32 $slant, int32 $weight)
-        is native($cairolib)
-        {*}
-
-    sub cairo_set_font_size(cairo_t $ctx, num64 $size)
-        is native($cairolib)
-        {*}
-
-    sub cairo_show_text(cairo_t $ctx, Str $utf8)
-        is native($cairolib)
-        {*}
-
-    sub cairo_text_path(cairo_t $ctx, Str $utf8)
-        is native($cairolib)
-        {*}
-
-    sub cairo_text_extents(cairo_t $ctx, Str $utf8, cairo_text_extents_t $extents)
-        is native($cairolib)
-        {*}
-
-    sub cairo_font_extents(cairo_t $ctx, cairo_font_extents_t $extents)
-        is native($cairolib)
-        {*}
-
-
-    has cairo_t $!context;
+    has cairo_t $!context handles <
+        status destroy push_group pop_group_to_source sub_path append_path
+        save restore paint close_path new_path identity_matrix
+    >;
 
     multi method new(cairo_t $context) {
         self.bless(:$context);
@@ -864,40 +952,17 @@ class Context {
         self.bless(:$context);
     }
 
-    method status {
-        cairo_status_t(cairo_status($!context))
-    }
-
     submethod BUILD(:$!context) { }
 
-    method destroy() {
-        cairo_destroy($!context)
-    }
-
-
-    method push_group() {
-        cairo_push_group($!context);
-    }
-
     method pop_group() returns Pattern {
-        Pattern.new(cairo_pop_group($!context));
+        Pattern.new($!context.pop_group);
     }
 
-    method pop_group_to_source() {
-        cairo_pop_group_to_source($!context);
-    }
-
-    method sub_path() {
-        cairo_new_sub_path($!context);
-    }
     multi method copy_path() {
-        cairo_copy_path($!context);
+        $!context.copy_path
     }
     multi method copy_path(:$flat! where .so) {
-        cairo_copy_path_flat($!context);
-    }
-    method append_path($path) {
-        cairo_append_path($!context, $path)
+        $!context.copy_path_flat
     }
 
     method memoize_path($storage is rw, &creator, :$flat?) {
@@ -909,249 +974,230 @@ class Context {
         }
     }
 
-    method save()    { cairo_save($!context) }
-    method restore() { cairo_restore($!context) }
-
     multi method rgb(Cool $r, Cool $g, Cool $b) {
-        cairo_set_source_rgb($!context, $r.Num, $g.Num, $b.Num);
+        $!context.set_source_rgb($r.Num, $g.Num, $b.Num);
     }
     multi method rgb(num $r, num $g, num $b) {
-        cairo_set_source_rgb($!context, $r, $g, $b);
+        $!context.set_source_rgb($r, $g, $b);
     }
 
     multi method rgba(Cool $r, Cool $g, Cool $b, Cool $a) {
-        cairo_set_source_rgba($!context, $r.Num, $g.Num, $b.Num, $a.Num);
+        $!context.set_source_rgba($r.Num, $g.Num, $b.Num, $a.Num);
     }
     multi method rgb(num $r, num $g, num $b, num $a) {
-        cairo_set_source_rgba($!context, $r, $g, $b, $a);
+        $!context.set_source_rgba($r, $g, $b, $a);
     }
 
     method pattern(Pattern $pat) {
-        cairo_set_source($!context, $pat.pattern);
+        $!context.set_source($pat.pattern);
     }
 
     method set_source_surface(Surface $surface, Cool $x = 0, Cool $y = 0) {
-        cairo_set_source_surface($!context, $surface.surface, $x.Num, $y.Num)
+        $!context.set_source_surface($surface.surface, $x.Num, $y.Num)
     }
 
     multi method mask(Pattern $pat, Cool $sx = 0, Cool $sy = 0) {
-        cairo_mask($!context, $pat.pattern, $sx.Num, $sy.Num)
+        $!context.mask($pat.pattern, $sx.Num, $sy.Num)
     }
     multi method mask(Pattern $pat, num $sx = 0e0, num $sy = 0e0) {
-        cairo_mask($!context, $pat.pattern, $sx, $sy)
+        $!context.mask($pat.pattern, $sx, $sy)
     }
     multi method mask(Surface $surface, Cool $sx = 0, Cool $sy = 0) {
-        cairo_mask_surface($!context, $surface.surface, $sx.Num, $sy.Num)
+        $!context.mask_surface($surface.surface, $sx.Num, $sy.Num)
     }
     multi method mask(Surface $surface, num $sx = 0e0, num $sy = 0e0) {
-        cairo_mask_surface($!context, $surface.surface, $sx, $sy)
+        $!context.mask_surface($surface.surface, $sx, $sy)
     }
 
     multi method fill {
-        cairo_fill($!context)
+        $!context.fill
     }
     multi method stroke {
-        cairo_stroke($!context)
+        $!context.stroke
     }
     multi method fill(:$preserve! where .so) {
-        cairo_fill_preserve($!context);
+        $!context.fill_preserve
     }
     multi method stroke(:$preserve! where .so) {
-        cairo_stroke_preserve($!context);
+        $!context.stroke_preserve
     }
     multi method clip {
-        cairo_clip($!context);
+        $!context.clip
     }
     multi method clip(:$preserve! where .so) {
-        cairo_clip_preserve($!context);
-    }
-
-    method paint {
-        cairo_paint($!context)
+        $!context.clip_preserve
     }
 
     multi method paint_with_alpha( num64 $alpha) {
-        cairo_paint_with_alpha($!context, $alpha)
+        $!context.paint_with_alpha($alpha)
     }
     multi method paint_with_alpha( Num(Cool) $alpha) {
-        cairo_paint_with_alpha($!context, $alpha)
+        $!context.paint_with_alpha($alpha)
     }
 
     multi method move_to(Cool $x, Cool $y) {
-        cairo_move_to($!context, $x.Num, $y.Num);
+        $!context.move_to($x.Num, $y.Num);
     }
     multi method line_to(Cool $x, Cool $y) {
-        cairo_line_to($!context, $x.Num, $y.Num);
+        $!context.line_to($x.Num, $y.Num);
     }
 
     multi method move_to(Cool $x, Cool $y, :$relative! where .so) {
-        cairo_rel_move_to($!context, $x.Num, $y.Num);
+        $!context.rel_move_to($x.Num, $y.Num);
     }
     multi method line_to(Cool $x, Cool $y, :$relative! where .so) {
-        cairo_rel_line_to($!context, $x.Num, $y.Num);
+        $!context.rel_line_to($x.Num, $y.Num);
     }
 
     multi method curve_to(Cool $x1, Cool $y1, Cool $x2, Cool $y2, Cool $x3, Cool $y3) {
-        cairo_curve_to($!context, $x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
+        $!context.curve_to($x1.Num, $y1.Num, $x2.Num, $y2.Num, $x3.Num, $y3.Num);
     }
 
     multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2, :$negative! where .so) {
-        cairo_arc_negative($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+        $!context.arc_negative($xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
     }
     multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2, :$negative! where .so) {
-        cairo_arc_negative($!context, $xc, $yc, $radius, $angle1, $angle2);
+        $!context.arc_negative($xc, $yc, $radius, $angle1, $angle2);
     }
 
     multi method arc(Cool $xc, Cool $yc, Cool $radius, Cool $angle1, Cool $angle2) {
-        cairo_arc($!context, $xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
+        $!context.arc($xc.Num, $yc.Num, $radius.Num, $angle1.Num, $angle2.Num);
     }
     multi method arc(num $xc, num $yc, num $radius, num $angle1, num $angle2) {
-        cairo_arc($!context, $xc, $yc, $radius, $angle1, $angle2);
-    }
-
-    method close_path() {
-        cairo_close_path($!context);
-    }
-
-    method new_path() {
-        cairo_new_path($!context);
+        $!context.arc($xc, $yc, $radius, $angle1, $angle2);
     }
 
     multi method rectangle(Cool $x, Cool $y, Cool $w, Cool $h) {
-        cairo_rectangle($!context, $x.Num, $y.Num, $w.Num, $h.Num);
+        $!context.rectangle($x.Num, $y.Num, $w.Num, $h.Num);
     }
     multi method rectangle(num $x, num $y, num $w, num $h) {
-        cairo_rectangle($!context, $x, $y, $w, $h);
+        $!context.rectangle($x, $y, $w, $h);
     }
 
     multi method translate(num $tx, num $ty) {
-        cairo_translate($!context, $tx, $ty)
+        $!context.translate($tx, $ty)
     }
     multi method translate(Cool $tx, Cool $ty) {
-        cairo_translate($!context, $tx.Num, $ty.Num)
+        $!context.translate($tx.Num, $ty.Num)
     }
 
     multi method scale(num $sx, num $sy) {
-        cairo_scale($!context, $sx, $sy)
+        $!context.scale($sx, $sy)
     }
     multi method scale(Cool $sx, Cool $sy) {
-        cairo_scale($!context, $sx.Num, $sy.Num)
-    }
-
-    method identity_matrix {
-        cairo_identity_matrix($!context);
+        $!context.scale($sx.Num, $sy.Num)
     }
 
     multi method rotate(num $angle) {
-        cairo_rotate($!context, $angle)
+        $!context.rotate($angle)
     }
     multi method rotate(Cool $angle) {
-        cairo_rotate($!context, $angle.Num)
+        $!context.rotate($angle.Num)
     }
 
-    method transform(cairo_matrix_t $matrix) {
-        cairo_transform($!context, $matrix)
+    method transform(Matrix $matrix) {
+        $!context.transform($matrix.matrix)
     }
 
     multi method select_font_face(str $family, int32 $slant, int32 $weight) {
-        cairo_select_font_face($!context, $family, $slant, $weight);
+        $!context.select_font_face($family, $slant, $weight);
     }
     multi method select_font_face(Str(Cool) $family, Int(Cool) $slant, Int(Cool) $weight) {
-        cairo_select_font_face($!context, $family, $slant, $weight);
+        $!context.select_font_face($family, $slant, $weight);
     }
 
     multi method set_font_size(num $size) {
-        cairo_set_font_size($!context, $size);
+        $!context.set_font_size($size);
     }
     multi method set_font_size(Num(Cool) $size) {
-        cairo_set_font_size($!context, $size);
+        $!context.set_font_size($size);
     }
 
     multi method show_text(str $text) {
-        cairo_show_text($!context, $text);
+        $!context.show_text($text);
     }
     multi method show_text(Str(Cool) $text) {
-        cairo_show_text($!context, $text);
+        $!context.show_text($text);
     }
 
     multi method text_path(str $text) {
-        cairo_text_path($!context, $text);
+        $!context.text_path($text);
     }
     multi method text_path(Str(Cool) $text) {
-        cairo_text_path($!context, $text);
+        $!context.text_path($text);
     }
 
     multi method text_extents(str $text --> cairo_text_extents_t) {
         my cairo_text_extents_t $extents .= new;
-        cairo_text_extents($!context, $text, $extents);
+        $!context.text_extents($text, $extents);
         $extents;
     }
     multi method text_extents(Str(Cool) $text --> cairo_text_extents_t) {
         my cairo_text_extents_t $extents .= new;
-        cairo_text_extents($!context, $text, $extents);
+        $!context.text_extents($text, $extents);
         $extents;
     }
 
     method font_extents {
         my cairo_font_extents_t $extents .= new;
-        cairo_font_extents($!context, $extents);
+        $!context.font_extents($extents);
         $extents;
     }
 
     multi method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset) {
-        cairo_set_dash($!context, $dashes, $len, $offset);
+        $!context.set_dash($dashes, $len, $offset);
     }
     multi method set_dash(List $dashes, Int(Cool) $len, Num(Cool) $offset) {
         my $d = CArray[num64].new;
         $d[$_] = $dashes[$_].Num
             for 0 ..^ $len;
-        cairo_set_dash($!context, $d, $len, $offset);
+        $!context.set_dash($d, $len, $offset);
     }
 
     method line_cap() {
         Proxy.new:
-            FETCH => { LineCap(cairo_get_line_cap($!context)) },
-            STORE => -> \c, \value { cairo_set_line_cap($!context, value.Int) }
+            FETCH => { LineCap($!context.get_line_cap) },
+            STORE => -> \c, \value { $!context.set_line_cap(value.Int) }
     }
 
     method fill_rule() {
         Proxy.new:
-            FETCH => { LineCap(cairo_get_fill_rule($!context)) },
-            STORE => -> \c, \value { cairo_set_fill_rule($!context, value.Int) }
+            FETCH => { LineCap($!context.get_fill_rule) },
+            STORE => -> \c, \value { $!context.set_fill_rule(value.Int) }
     }
 
     method line_join() {
         Proxy.new:
-            FETCH => { LineJoin(cairo_get_line_join($!context)) },
-            STORE => -> \c, \value { cairo_set_line_join($!context, value.Int) }
+            FETCH => { LineJoin($!context.get_line_join) },
+            STORE => -> \c, \value { $!context.set_line_join(value.Int) }
     }
 
     method operator() {
         Proxy.new:
-            FETCH => { Operator(cairo_get_operator($!context)) },
-            STORE => -> \c, \value { cairo_set_operator($!context, value.Int) }
+            FETCH => { Operator($!context.get_operator) },
+            STORE => -> \c, \value { $!context.set_operator(value.Int) }
     }
 
     method antialias() {
         Proxy.new:
-            FETCH => { Antialias(cairo_get_antialias($!context)) },
-            STORE => -> \c, \value { cairo_set_antialias($!context, value.Int) }
+            FETCH => { Antialias($!context.get_antialias) },
+            STORE => -> \c, \value { $!context.set_antialias(value.Int) }
     }
 
     method line_width() {
         Proxy.new:
-            FETCH => { cairo_get_line_width($!context) },
-            STORE => -> \c, \value { cairo_set_line_width($!context, value.Num) }
+            FETCH => { $!context.get_line_width},
+            STORE => -> \c, \value { $!context.set_line_width(value.Num) }
     }
 
     method matrix() {
         Proxy.new:
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
-                cairo_get_matrix($!context, $matrix);
-                $matrix;
+                $!context.get_matrix($matrix);
+                Matrix.new: :$matrix;
             },
-            STORE => -> \c, cairo_matrix_t \matrix { cairo_set_matrix($!context, matrix) }
+            STORE => -> \c, Matrix \matrix { $!context.set_matrix(matrix.matrix) }
     }
 }
 
