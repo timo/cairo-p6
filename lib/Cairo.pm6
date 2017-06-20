@@ -31,6 +31,11 @@ our class cairo_surface_t is repr('CPointer') {
         is symbol('cairo_surface_show_page')
         {*}
 
+    method flush
+        is native($cairolib)
+        is symbol('cairo_surface_flush')
+        {*}
+
     method finish
         is native($cairolib)
         is symbol('cairo_surface_finish')
@@ -647,7 +652,7 @@ class Matrix {
 }
 
 class Surface {
-    has cairo_surface_t $.surface handles <reference destroy finish show_page>;
+    has cairo_surface_t $.surface handles <reference destroy flush finish show_page>;
 
     method write_png(Str $filename) {
         my $result = $!surface.write_to_png($filename);
@@ -1031,7 +1036,7 @@ class Context {
     multi method paint_with_alpha( num64 $alpha) {
         $!context.paint_with_alpha($alpha)
     }
-    multi method paint_with_alpha( Num(Num(Cool)) $alpha) {
+    multi method paint_with_alpha( Num(Cool) $alpha) {
         $!context.paint_with_alpha($alpha)
     }
 
