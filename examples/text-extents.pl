@@ -5,8 +5,8 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
     given Cairo::Context.new($_) {
 
         .select_font_face("Sans",
-                          Cairo::FontSlant::FONT_SLANT_NORMAL,
-                          Cairo::FontWeight::FONT_WEIGHT_NORMAL);
+                          Cairo::FONT_SLANT_NORMAL,
+                          Cairo::FONT_WEIGHT_NORMAL);
         .set_font_size(100.0);
 
         my \text = "cairo";

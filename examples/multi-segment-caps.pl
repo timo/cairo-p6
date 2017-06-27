@@ -14,7 +14,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         .line_to(200.0, 175.0);
 
         .line_width = 30.0;
-        .line_cap = Cairo::LineCap::LINE_CAP_ROUND;
+        .line_cap = Cairo::LINE_CAP_ROUND;
         .stroke;
 
     };

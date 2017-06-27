@@ -10,7 +10,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         .sub_path; .arc(64, 64, 40, 0, 2*pi);
         .sub_path; .arc(192, 64, 40, 0, -2*pi, :negative);
 
-        .fill_rule = Cairo::FillRule::FILL_RULE_EVEN_ODD;
+        .fill_rule = Cairo::FILL_RULE_EVEN_ODD;
         .rgb(0, 0.7, 0); .fill(:preserve);
         .rgb(0, 0, 0); .stroke;
 
@@ -19,7 +19,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         .sub_path; .arc(64, 64, 40, 0, 2*pi);
         .sub_path; .arc(192, 64, 40, 0, -2*pi, :negative);
 
-        .fill_rule = Cairo::FillRule::FILL_RULE_WINDING;
+        .fill_rule = Cairo::FILL_RULE_WINDING;
         .rgb(0, 0, 0.9); .fill(:preserve);
         .rgb(0, 0, 0); .stroke;
     };

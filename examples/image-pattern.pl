@@ -9,7 +9,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         my \h = $image.height;
 
         my Cairo::Pattern::Surface $pattern .= create($image.surface);
-        $pattern.extend = Cairo::Extend::EXTEND_REPEAT;
+        $pattern.extend = Cairo::EXTEND_REPEAT;
 
         .translate(128.0, 128.0);
         .rotate(pi / 4);

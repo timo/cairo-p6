@@ -8,19 +8,19 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         .move_to(76.8, 84.48);
         .line_to(51.2, -51.2, :relative);
         .line_to(51.2, 51.2, :relative);
-        .line_join = Cairo::LineJoin::LINE_JOIN_MITER; # default
+        .line_join = Cairo::LINE_JOIN_MITER; # default
         .stroke;
 
         .move_to(76.8, 161.28);
         .line_to(51.2, -51.2, :relative);
         .line_to(51.2, 51.2, :relative);
-        .line_join = Cairo::LineJoin::LINE_JOIN_BEVEL;
+        .line_join = Cairo::LINE_JOIN_BEVEL;
         .stroke;
 
         .move_to(76.8, 238.08);
         .line_to(51.2, -51.2, :relative);
         .line_to(51.2, 51.2, :relative);
-        .line_join = Cairo::LineJoin::LINE_JOIN_ROUND;
+        .line_join = Cairo::LINE_JOIN_ROUND;
         .stroke;
 
     };

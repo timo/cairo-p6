@@ -5,7 +5,7 @@ given Cairo::Surface::PDF.create("multi-page-pdf.pdf", 256, 256) {
     for 1..2 -> $page {
         given Cairo::Context.new($_) {
 
-            .select_font_face("courier", Cairo::FontSlant::FONT_SLANT_ITALIC, Cairo::FontWeight::FONT_WEIGHT_BOLD);
+            .select_font_face("courier", Cairo::FONT_SLANT_ITALIC, Cairo::FONT_WEIGHT_BOLD);
             .set_font_size(10);
             .save;
              do {
