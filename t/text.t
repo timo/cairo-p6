@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 8;
+plan 9;
 
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
     given Cairo::Context.new($_) {
@@ -23,6 +23,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
         is-approx $text-extents.width, 67, 'text extents width';
         is-approx $text-extents.height, 7, 'text extents height';
     };
+    lives-ok {.Blob}, '.Blob';
 };
 
 done-testing;

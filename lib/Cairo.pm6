@@ -11,6 +11,86 @@ BEGIN {
 
 use NativeCall;
 
+our enum cairo_status_t <
+    STATUS_SUCCESS
+
+    STATUS_NO_MEMORY
+    STATUS_INVALID_RESTORE
+    STATUS_INVALID_POP_GROUP
+    STATUS_NO_CURRENT_POINT
+    STATUS_INVALID_MATRIX
+    STATUS_INVALID_STATUS
+    STATUS_NULL_POINTER
+    STATUS_INVALID_STRING
+    STATUS_INVALID_PATH_DATA
+    STATUS_READ_ERROR
+    STATUS_WRITE_ERROR
+    STATUS_SURFACE_FINISHED
+    STATUS_SURFACE_TYPE_MISMATCH
+    STATUS_PATTERN_TYPE_MISMATCH
+    STATUS_INVALID_CONTENT
+    STATUS_INVALID_FORMAT
+    STATUS_INVALID_VISUAL
+    STATUS_FILE_NOT_FOUND
+    STATUS_INVALID_DASH
+    STATUS_INVALID_DSC_COMMENT
+    STATUS_INVALID_INDEX
+    STATUS_CLIP_NOT_REPRESENTABLE
+    STATUS_TEMP_FILE_ERROR
+    STATUS_INVALID_STRIDE
+    STATUS_FONT_TYPE_MISMATCH
+    STATUS_USER_FONT_IMMUTABLE
+    STATUS_USER_FONT_ERROR
+    STATUS_NEGATIVE_COUNT
+    STATUS_INVALID_CLUSTERS
+    STATUS_INVALID_SLANT
+    STATUS_INVALID_WEIGHT
+    STATUS_INVALID_SIZE
+    STATUS_USER_FONT_NOT_IMPLEMENTED
+    STATUS_DEVICE_TYPE_MISMATCH
+    STATUS_DEVICE_ERROR
+    STATUS_INVALID_MESH_CONSTRUCTION
+    STATUS_DEVICE_FINISHED
+
+    STATUS_LAST_STATUS
+>;
+
+my class StreamClosure is repr('CStruct') is rw {
+
+    sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
+        is native($cairolib)
+        {*}
+
+    has CArray[uint8] $!buf;
+    has size_t $.buf-len;
+    has size_t $.n-read;
+    has size_t $.size;
+    method TWEAK(CArray :$buf!) { $!buf := $buf }
+    method buf-pointer(--> Pointer[uint8]) {
+        nativecast(Pointer[uint8], $!buf);
+    }
+    method read-pointer(--> Pointer) {
+        Pointer[uint8].new: +$.buf-pointer + $!n-read;
+    }
+    method write-pointer(--> Pointer) {
+        Pointer[uint8].new: +$.buf-pointer + $!buf-len;
+    }
+    our method read(Pointer $out, uint32 $len --> int32) {
+        return STATUS_READ_ERROR
+            if $len > self.buf-len - self.n-read;
+
+        memcpy($out, self.read-pointer, $len);
+        self.n-read += $len;
+        return STATUS_SUCCESS;
+    }
+    our method write(Pointer $in, uint32 $len --> int32) {
+        return STATUS_WRITE_ERROR
+            if $len > self.size - self.buf-len;
+        memcpy(self.write-pointer, $in, $len); 
+        self.buf-len += $len;
+        return STATUS_SUCCESS;
+    }
+ }
 
 our class cairo_surface_t is repr('CPointer') {
 
@@ -18,6 +98,12 @@ our class cairo_surface_t is repr('CPointer') {
         returns int32
         is native($cairolib)
         is symbol('cairo_surface_write_to_png')
+        {*}
+
+    method write_to_png_stream(&write-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
+        returns int32
+        is native($cairolib)
+        is symbol('cairo_surface_write_to_png_stream')
         {*}
 
     method reference
@@ -486,50 +572,6 @@ our enum Format (
     "FORMAT_RGB30"    ,
 );
 
-our enum cairo_status_t <
-    STATUS_SUCCESS
-
-    STATUS_NO_MEMORY
-    STATUS_INVALID_RESTORE
-    STATUS_INVALID_POP_GROUP
-    STATUS_NO_CURRENT_POINT
-    STATUS_INVALID_MATRIX
-    STATUS_INVALID_STATUS
-    STATUS_NULL_POINTER
-    STATUS_INVALID_STRING
-    STATUS_INVALID_PATH_DATA
-    STATUS_READ_ERROR
-    STATUS_WRITE_ERROR
-    STATUS_SURFACE_FINISHED
-    STATUS_SURFACE_TYPE_MISMATCH
-    STATUS_PATTERN_TYPE_MISMATCH
-    STATUS_INVALID_CONTENT
-    STATUS_INVALID_FORMAT
-    STATUS_INVALID_VISUAL
-    STATUS_FILE_NOT_FOUND
-    STATUS_INVALID_DASH
-    STATUS_INVALID_DSC_COMMENT
-    STATUS_INVALID_INDEX
-    STATUS_CLIP_NOT_REPRESENTABLE
-    STATUS_TEMP_FILE_ERROR
-    STATUS_INVALID_STRIDE
-    STATUS_FONT_TYPE_MISMATCH
-    STATUS_USER_FONT_IMMUTABLE
-    STATUS_USER_FONT_ERROR
-    STATUS_NEGATIVE_COUNT
-    STATUS_INVALID_CLUSTERS
-    STATUS_INVALID_SLANT
-    STATUS_INVALID_WEIGHT
-    STATUS_INVALID_SIZE
-    STATUS_USER_FONT_NOT_IMPLEMENTED
-    STATUS_DEVICE_TYPE_MISMATCH
-    STATUS_DEVICE_ERROR
-    STATUS_INVALID_MESH_CONSTRUCTION
-    STATUS_DEVICE_FINISHED
-
-    STATUS_LAST_STATUS
->;
-
 our enum Operator <
     OPERATOR_CLEAR
 
@@ -660,6 +702,14 @@ class Surface {
         cairo_status_t($result);
     }
 
+    method Blob(UInt :$size = 64_000 --> Blob) {
+         my $buf = CArray[uint8].new;
+         $buf[$size] = 0;
+         my $closure = StreamClosure.new: :$buf, :buf-len(0), :n-read(0), :$size;
+         $!surface.write_to_png_stream(&StreamClosure::write, $closure);
+         return Blob.new: $buf[0 ..^ $closure.buf-len];
+    }
+
     method record(&things) {
         my $ctx = Context.new(self);
         &things($ctx);
@@ -749,27 +799,6 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    class StreamClosure is repr('CStruct') is rw {
-        has CArray[uint8] $!buf;
-        has size_t $.buf-len;
-        has size_t $.n-read;
-        method TWEAK(CArray :$buf!) { $!buf := $buf }
-        method buf-pointer(--> Pointer[uint8]) {
-            nativecast(Pointer[uint8], $!buf);
-        }
-        method read-pointer(--> Pointer) {
-            Pointer[uint8].new: +$.buf-pointer + $!n-read;
-        }
-        our sub read(StreamClosure $closure, Pointer $out, uint32 $len --> int32) {
-            return STATUS_READ_ERROR
-                if $len > $closure.buf-len - $closure.n-read;
-
-            memcpy($out, $closure.read-pointer, $len);
-            $closure.n-read += $len;
-            return STATUS_SUCCESS;
-        }
-     }
-
     sub cairo_image_surface_create_from_png(Str $filename)
         returns cairo_surface_t
         is native($cairolib)
@@ -782,10 +811,6 @@ class Image is Surface {
 
     sub cairo_format_stride_for_width(int32 $format, int32 $width)
         returns int32
-        is native($cairolib)
-        {*}
-
-    sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
         is native($cairolib)
         {*}
 
