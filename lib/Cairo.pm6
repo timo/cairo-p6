@@ -196,9 +196,44 @@ our class cairo_matrix_t is repr('CStruct') {
         is symbol('cairo_matrix_init_translate')
         {*}
 
+    method init_rotate(num64 $radians)
+        is native($cairolib)
+        is symbol('cairo_matrix_init_rotate')
+        {*}
+
     method init(num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
         is native($cairolib)
         is symbol('cairo_matrix_init')
+        {*}
+
+    method identity
+        is native($cairolib)
+        is symbol('cairo_matrix_identity')
+        {*}
+
+    method scale(num64 $sx, num64 $sy)
+        is native($cairolib)
+        is symbol('cairo_matrix_scale')
+        {*}
+
+    method translate(num64 $tx, num64 $ty)
+        is native($cairolib)
+        is symbol('cairo_matrix_translate')
+        {*}
+
+    method rotate(cairo_matrix_t $b)
+        is native($cairolib)
+        is symbol('cairo_matrix_rotate')
+        {*}
+
+    method invert
+        is native($cairolib)
+        is symbol('cairo_matrix_invert')
+        {*}
+
+    method multiply(cairo_matrix_t $a, cairo_matrix_t $b)
+        is native($cairolib)
+        is symbol('cairo_matrix_multiply')
         {*}
 
 }
@@ -674,8 +709,13 @@ class Matrix {
         self;
     }
 
-    method init_translate(Num(Cool) $sx, Num(Cool) $sy, :$translate! where .so) {
+    method init_translate(Num(Cool) $sx, Num(Cool) $sy) {
         $!matrix.init_translate($sx, $sy);
+        self;
+    }
+
+    method init_rotate(Num(Cool) $rad) {
+        $!matrix.init_translate($rad);
         self;
     }
 
@@ -688,6 +728,33 @@ class Matrix {
                       Num(Cool) $xy = 0e0, Num(Cool) $yy = 1e0,
                       Num(Cool) $x0 = 0e0, Num(Cool) $y0 = 0e0) {
         $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
+        self;
+    }
+
+    method scale(Num(Cool) $sx, Num(Cool) $sy) {
+        $!matrix.scale($sx, $sy);
+        self;
+    }
+
+    method translate(Num(Cool) $tx, Num(Cool) $ty) {
+        $!matrix.translate($tx, $ty);
+        self;
+    }
+
+    method rotate(Num(Cool) $rad) {
+        $!matrix.rotate($rad);
+        self;
+    }
+
+    method invert {
+        $!matrix.invert;
+        self;
+    }
+
+    method multiply(Matrix $b) {
+        my cairo_matrix_t $a-matrix = $!matrix;
+        $!matrix = cairo_matrix_t.new;
+        $!matrix.multiply($a-matrix, $b.matrix);
         self;
     }
 

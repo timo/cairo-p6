@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 9;
+plan 14;
 
 constant Matrix = Cairo::Matrix;
 constant matrix_t = Cairo::cairo_matrix_t;
@@ -39,6 +39,17 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
         is-deeply $prev-matrix, $identity-matrix, 'previous';
         is-approx $rot-matrix.yx, 1, 'rotated yx';
         is-approx $rot-matrix.xy, -1, 'rotated xy';
+
+        my $matrix = Matrix.new.init_translate(10,20);
+        is-deeply $matrix, Matrix.new.init( :xx(1e0), :yy(1e0), :x0(10e0), :y0(20e0) ), 'init_translate';
+
+        $matrix.multiply: Matrix.new.init_scale(2,3);
+        is-deeply $matrix, Matrix.new.init( :xx(2e0), :yy(3e0), :x0(20e0), :y0(60e0) ), 'multiply';
+
+        $matrix.invert;
+        is-approx $matrix.xx, 0.5, 'invert xx';
+        is-approx $matrix.yy, 1/3, 'invert yy';
+        is-approx $matrix.x0, -10, 'invert x0';
     };
 };
 
