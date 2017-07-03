@@ -181,34 +181,9 @@ our class cairo_matrix_t is repr('CStruct') {
     has num64 $.xy; has num64 $.yy;
     has num64 $.x0; has num64 $.y0;
 
-    method init_identity
-        is native($cairolib)
-        is symbol('cairo_matrix_init_identity')
-        {*}
-
-    method init_scale(num64 $sx, num64 $sy)
-        is native($cairolib)
-        is symbol('cairo_matrix_init_scale')
-        {*}
-
-    method init_translate(num64 $tx, num64 $ty)
-        is native($cairolib)
-        is symbol('cairo_matrix_init_translate')
-        {*}
-
-    method init_rotate(num64 $radians)
-        is native($cairolib)
-        is symbol('cairo_matrix_init_rotate')
-        {*}
-
     method init(num64 $xx, num64 $yx, num64 $xy, num64 $yy, num64 $x0, num64 $y0)
         is native($cairolib)
         is symbol('cairo_matrix_init')
-        {*}
-
-    method identity
-        is native($cairolib)
-        is symbol('cairo_matrix_identity')
         {*}
 
     method scale(num64 $sx, num64 $sy)
@@ -698,26 +673,6 @@ class Matrix {
     has cairo_matrix_t $.matrix handles <
         xx yx xy yy x0 y0
     > .= new: :xx(1e0), :yy(1e0);
-
-    method init_identity {
-        $!matrix.init_identity;
-        self;
-    }
-
-    method init_scale(Num(Cool) $sx, Num(Cool) $sy) {
-        $!matrix.init_scale($sx, $sy);
-        self;
-    }
-
-    method init_translate(Num(Cool) $sx, Num(Cool) $sy) {
-        $!matrix.init_translate($sx, $sy);
-        self;
-    }
-
-    method init_rotate(Num(Cool) $rad) {
-        $!matrix.init_translate($rad);
-        self;
-    }
 
     multi method init(Num(Cool) :$xx = 1e0, Num(Cool) :$yx = 0e0, Num(Cool) :$xy = 0e0, Num(Cool) :$yy = 1e0, Num(Cool) :$x0 = 0e0, Num(Cool) :$y0 = 0e0) {
         $!matrix.init( $xx, $yx, $xy, $yy, $x0, $y0 );
