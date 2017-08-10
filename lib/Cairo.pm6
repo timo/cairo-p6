@@ -100,7 +100,9 @@ our class cairo_surface_t is repr('CPointer') {
         is symbol('cairo_surface_write_to_png')
         {*}
 
-    method write_to_png_stream(&write-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
+    method write_to_png_stream(
+            &write-func (StreamClosure, Pointer[uint8], uint32 --> int32),
+            StreamClosure)
         returns int32
         is native($cairolib)
         is symbol('cairo_surface_write_to_png_stream')
@@ -826,7 +828,9 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_image_surface_create_from_png_stream(&read-func (StreamClosure, Pointer[uint8], uint32 --> int32), StreamClosure)
+    sub cairo_image_surface_create_from_png_stream(
+            &read-func (StreamClosure, Pointer[uint8], uint32 --> int32),
+            StreamClosure)
         returns cairo_surface_t
         is native($cairolib)
         {*}
@@ -904,7 +908,7 @@ class Pattern {
         Proxy.new:
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
-                $!pattern.get_matrix;
+                $!pattern.get_matrix($matrix);
                 Cairo::Matrix.new: :$matrix;
             },
             STORE => -> \c, Cairo::Matrix \matrix { $!pattern.set_matrix(matrix.matrix) }
