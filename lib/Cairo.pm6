@@ -1,4 +1,4 @@
-module Cairo {
+unit module Cairo;
 
 my $cairolib;
 BEGIN {
@@ -1257,4 +1257,3 @@ class Context {
     }
 }
 
-}
