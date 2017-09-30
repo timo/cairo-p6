@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 9;
+plan 7;
 
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
     given Cairo::Context.new($_) {
@@ -12,16 +12,18 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
             .set_font_size(10);
             .show_text("Hello World");
         }
+        # issue #11 actual chosen font is system dependant
         my $font-extents = .font_extents;
         isa-ok $font-extents, Cairo::cairo_font_extents_t;
-        is-approx $font-extents.ascent, 9, 'font extents ascent';
-        is-approx $font-extents.descent, 3, 'font extents descent';
-        is-approx $font-extents.height, 12, 'font extents height';
+        ok 7 < $font-extents.ascent < 12, 'font extents ascent'
+            or diag "got ascent: {$font-extents.ascent}";
 
         my $text-extents = .text_extents("Hello World");
         isa-ok $text-extents, Cairo::cairo_text_extents_t;
-        is-approx $text-extents.width, 67, 'text extents width';
-        is-approx $text-extents.height, 7, 'text extents height';
+        ok 60 < $text-extents.width < 75, 'text extents width'
+            or diag "got width: {$text-extents.width}";
+        ok 5 < $text-extents.height < 9, 'text extents height'
+            or diag "got height: {$text-extents.height}";
     };
     lives-ok {.Blob}, '.Blob';
 };
