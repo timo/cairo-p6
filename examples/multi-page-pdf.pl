@@ -11,7 +11,8 @@ given Cairo::Surface::PDF.create("multi-page-pdf.pdf", 256, 256) {
              do {
                 .rgb(0, 0.7, 0.9);
                 .rectangle(10, 10, 50, 50);
-                .fill :preserve; .rgb(1, 1, 1);
+                .fill :preserve;
+                .rgb(1, 1, 1);
                 .stroke;
             };
             .restore;
