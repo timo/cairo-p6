@@ -1,6 +1,6 @@
 unit module Cairo;
 
-my $cairolib;
+our $cairolib;
 BEGIN {
     if $*VM.config<dll> ~~ /dll/ {
         $cairolib = 'libcairo-2';
@@ -176,6 +176,13 @@ our class cairo_font_extents_t is repr('CStruct') {
     has num64 $.height;
     has num64 $.max_x_advance;
     has num64 $.max_y_advance;
+}
+
+our class cairo_font_face_t is repr('CPointer') {
+   method destroy
+        is native($cairolib)
+        is symbol('cairo_font_face_destroy')
+        {*}
 }
 
 our class cairo_matrix_t is repr('CStruct') {
@@ -541,6 +548,11 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_select_font_face')
         {*}
 
+    method set_font_face(cairo_font_face_t $font)
+        is native($cairolib)
+        is symbol('cairo_set_font_face')
+        {*}
+
     method set_font_size(num64 $size)
         is native($cairolib)
         is symbol('cairo_set_font_size')
@@ -568,11 +580,12 @@ our class cairo_t is repr('CPointer') {
 
 }
 
-our class Matrix { ... }
+our class Matrix  { ... }
 our class Surface { ... }
-our class Image { ... }
+our class Image   { ... }
 our class Pattern { ... }
 our class Context { ... }
+our class Font    { ... }
 
 our enum Format (
      FORMAT_INVALID => -1,
@@ -892,7 +905,7 @@ class Pattern::Gradient::Radial { ... }
 
 class Pattern {
 
-    has $.pattern handles <destroy>;
+    has cairo_pattern_t $.pattern handles <destroy>;
 
     multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
@@ -1161,6 +1174,9 @@ class Context {
     multi method select_font_face(Str(Cool) $family, Int(Cool) $slant, Int(Cool) $weight) {
         $!context.select_font_face($family, $slant, $weight);
     }
+    method set_font_face(Cairo::Font $font) {
+        $!context.set_font_face($font.face);
+    }
 
     multi method set_font_size(num $size) {
         $!context.set_font_size($size);
@@ -1255,5 +1271,20 @@ class Context {
             },
             STORE => -> \c, Matrix \matrix { $!context.set_matrix(matrix.matrix) }
     }
+
 }
 
+class Font {
+    sub cairo_ft_font_face_create_for_ft_face(Pointer $ft-face, int32 $flags)
+        returns cairo_font_face_t
+        is native($cairolib)
+        {*}
+
+      has cairo_font_face_t $.face handles <destroy>;
+      multi method create($font-face, :$free-type! where .so, Int :$flags = 0) {
+          return self.new(
+                 face => cairo_ft_font_face_create_for_ft_face( nativecast(Pointer, $font-face),
+                                                                $flags )
+                 )
+      }
+}
