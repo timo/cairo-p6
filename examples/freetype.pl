@@ -2,15 +2,22 @@
 use Cairo;
 use Font::FreeType;
 use Font::FreeType::Face;
+use Font::FreeType::Native;
+
+my Font::FreeType $freetype .= new;
+my Font::FreeType::Face $face = $freetype.face('examples/fonts/DejaVuSans.ttf');
+# get the underlying native struct
+my FT_Face $ft-face = $face.struct;
+# reference count it. to ensure it doesn't get destroyed
+$ft-face.FT_Reference_Face;
+my Cairo::Font $font .= create(
+    $face.struct, :free-type,
+);
 
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
-    given Cairo::Context.new($_) {
 
-        my Font::FreeType $freetype .= new;
-        my Font::FreeType::Face $face = $freetype.face('examples/fonts/DejaVuSans.ttf');
-        my Cairo::Font $font .= create(
-            $face.struct, :free-type,
-        );
+        given Cairo::Context.new($_) {
+
         .set_font_size(90.0);
         .set_font_face($font);
         .move_to(10.0, 135.0);
@@ -32,4 +39,12 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
         .fill;
     }
     .write_png("freetype.png");
+
+    .destroy;
 }
+
+# just to demonstrate graceful tidy-up of Cairo and FreeType faces.
+$font.destroy;
+$font = Nil;
+$ft-face.FT_Done_Face;
+$ft-face = Nil;
