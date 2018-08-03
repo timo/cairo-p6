@@ -17,3 +17,9 @@ Synopsis
 
 
 Please see the `examples` folder.
+
+
+Native Cairo library
+--------------
+
+In order to use this module, native `Cairo` library is needed. See instructions at https://cairographics.org/download/.
