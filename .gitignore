@@ -1,6 +1,6 @@
 *~
 .*
 *#*
-*.png
-*.svg
-*.pdf
+#.png
+#*.svg
+#*.pdf
