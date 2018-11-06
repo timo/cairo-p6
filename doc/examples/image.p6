@@ -4,7 +4,7 @@ use Cairo;
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
     given Cairo::Context.new($_) {
 
-        my \image = Cairo::Image.open("examples/camelia.png" );
+        my \image = Cairo::Image.open("camelia.png" );
         my \w = image.width;
         my \h = image.height;
 
