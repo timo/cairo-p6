@@ -911,13 +911,13 @@ class Pattern {
         self.bless(:$pattern)
     }
 
-    method extend() {
+    method extend() is rw {
         Proxy.new:
             FETCH => { Extend($!pattern.get_extend) },
             STORE => -> \c, \value { $!pattern.set_extend(value.Int) }
     }
 
-    method matrix() {
+    method matrix() is rw {
         Proxy.new:
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
@@ -1226,43 +1226,43 @@ class Context {
         $!context.set_dash($d, $len, $offset);
     }
 
-    method line_cap() {
+    method line_cap() is rw {
         Proxy.new:
             FETCH => { LineCap($!context.get_line_cap) },
             STORE => -> \c, \value { $!context.set_line_cap(value.Int) }
     }
 
-    method fill_rule() {
+    method fill_rule() is rw {
         Proxy.new:
             FETCH => { LineCap($!context.get_fill_rule) },
             STORE => -> \c, \value { $!context.set_fill_rule(value.Int) }
     }
 
-    method line_join() {
+    method line_join() is rw {
         Proxy.new:
             FETCH => { LineJoin($!context.get_line_join) },
             STORE => -> \c, \value { $!context.set_line_join(value.Int) }
     }
 
-    method operator() {
+    method operator() is rw {
         Proxy.new:
             FETCH => { Operator($!context.get_operator) },
             STORE => -> \c, \value { $!context.set_operator(value.Int) }
     }
 
-    method antialias() {
+    method antialias() is rw {
         Proxy.new:
             FETCH => { Antialias($!context.get_antialias) },
             STORE => -> \c, \value { $!context.set_antialias(value.Int) }
     }
 
-    method line_width() {
+    method line_width() is rw {
         Proxy.new:
             FETCH => { $!context.get_line_width},
             STORE => -> \c, \value { $!context.set_line_width(value.Num) }
     }
 
-    method matrix() {
+    method matrix() is rw {
         Proxy.new:
             FETCH => {
                 my cairo_matrix_t $matrix .= new;
