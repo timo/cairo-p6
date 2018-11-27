@@ -58,7 +58,7 @@ our enum cairo_status_t <
 my class StreamClosure is repr('CStruct') is rw {
 
     sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
-        is native($cairolib)
+        is native
         {*}
 
     has CArray[uint8] $!buf;
@@ -744,7 +744,7 @@ class Surface {
          $buf[$size] = 0;
          my $closure = StreamClosure.new: :$buf, :buf-len(0), :n-read(0), :$size;
          $!surface.write_to_png_stream(&StreamClosure::write, $closure);
-         return Blob.new: $buf[0 ..^ $closure.buf-len];
+         return Blob[uint8].new: $buf[0 ..^ $closure.buf-len];
     }
 
     method record(&things) {
