@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 7;
+plan 10;
 
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
     given Cairo::Context.new($_) {
@@ -25,7 +25,12 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
         ok 5 < $text-extents.height < 9, 'text extents height'
             or diag "got height: {$text-extents.height}";
     };
-    lives-ok {.Blob}, '.Blob';
+    my Blob $data;
+    my Cairo::Image $image;
+    lives-ok {$data = .Blob}, '.Blob';
+    ok $data.elems, 'data has length';
+    lives-ok {$image = Cairo::Image.create($data, $data.elems)}, 'create image from data';
+    is $image.width, 128, 'created image width';
 };
 
 done-testing;
