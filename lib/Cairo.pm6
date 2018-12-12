@@ -55,48 +55,6 @@ our enum cairo_status_t is export <
     CAIRO_STATUS_LAST_STATUS
 >;
 
-our enum cairo_operator_t is export <
-  CAIRO_OPERATOR_CLEAR
-  CAIRO_OPERATOR_SOURCE
-  CAIRO_OPERATOR_OVER
-  CAIRO_OPERATOR_IN
-  CAIRO_OPERATOR_OUT
-  CAIRO_OPERATOR_ATOP
-  CAIRO_OPERATOR_DEST
-  CAIRO_OPERATOR_DEST_OVER
-  CAIRO_OPERATOR_DEST_IN
-  CAIRO_OPERATOR_DEST_OUT
-  CAIRO_OPERATOR_DEST_ATOP
-  CAIRO_OPERATOR_XOR
-  CAIRO_OPERATOR_ADD
-  CAIRO_OPERATOR_SATURATE
-  CAIRO_OPERATOR_MULTIPLY
-  CAIRO_OPERATOR_SCREEN
-  CAIRO_OPERATOR_OVERLAY
-  CAIRO_OPERATOR_DARKEN
-  CAIRO_OPERATOR_LIGHTEN
-  CAIRO_OPERATOR_COLOR_DODGE
-  CAIRO_OPERATOR_COLOR_BURN
-  CAIRO_OPERATOR_HARD_LIGHT
-  CAIRO_OPERATOR_SOFT_LIGHT
-  CAIRO_OPERATOR_DIFFERENCE
-  CAIRO_OPERATOR_EXCLUSION
-  CAIRO_OPERATOR_HSL_HUE
-  CAIRO_OPERATOR_HSL_SATURATION
-  CAIRO_OPERATOR_HSL_COLOR
-  CAIRO_OPERATOR_HSL_LUMINOSITY
->;
-
-our enum cairo_format_t is export (
-  CAIRO_FORMAT_INVALID   => -1,
-  CAIRO_FORMAT_ARGB32    => 0,
-  CAIRO_FORMAT_RGB24     => 1,
-  CAIRO_FORMAT_A8        => 2,
-  CAIRO_FORMAT_A1        => 3,
-  CAIRO_FORMAT_RGB16_565 => 4,
-  CAIRO_FORMAT_RGB30     => 5
-);
-
 our enum CairoStatus is export <
     STATUS_SUCCESS
 
@@ -243,9 +201,54 @@ our class cairo_surface_t is repr('CPointer') {
 
 }
 
+# Backwards Compatibility
+our enum cairo_path_data_type_t is export <
+  CAIRO_PATH_MOVE_TO
+  CAIRO_PATH_LINE_TO
+  CAIRO_PATH_CURVE_TO
+  CAIRO_PATH_CLOSE_PATH
+>;
+
+our enum PathDataTypes is export <
+  PATH_MOVE_TO
+  PATH_LINE_TO
+  PATH_CURVE_TO
+  PATH_CLOSE_PATH
+>;
+
 our class cairo_rectangle_t is repr('CPointer') { }
 
-our class cairo_path_t is repr('CPointer') { }
+our class cairo_path_data_header_t  is repr('CStruct') {
+  has uint32     $.type;
+  has int32      $.length;
+}
+our class cairo_path_data_point_t is repr('CStruct') {
+  has num64 $.x;
+  has num64 $.y;
+}
+our class cairo_path_data_t is repr('CUnion') is export {
+  HAS cairo_path_data_header_t $.header;
+  HAS cairo_path_data_point_t  $.point;
+
+  method data-type {
+    PathDataTypes( self.header.type )
+  }
+}
+
+our class cairo_path_t is repr('CStruct') is export {
+  has uint32                    $.status;   # cairo_path_data_type_t
+  has CArray[cairo_path_data_t] $.data;
+  has int32                     $.num_data;
+
+  sub path_destroy(cairo_path_t)
+    is symbol('cairo_path_destroy')
+    is native($cairolib)
+    {*}
+
+  method destroy {
+    path_destroy(self);
+  }
+}
 
 our class cairo_text_extents_t is repr('CStruct') {
     has num64 $.x_bearing;
@@ -666,6 +669,143 @@ our class cairo_t is repr('CPointer') {
 
 }
 
+# Backwards compatibility
+our enum cairo_subpixel_order_t is export <
+    CAIRO_SUBPIXEL_ORDER_DEFAULT,
+    CAIRO_SUBPIXEL_ORDER_RGB,
+    CAIRO_SUBPIXEL_ORDER_BGR,
+    CAIRO_SUBPIXEL_ORDER_VRGB,
+    CAIRO_SUBPIXEL_ORDER_VBGR
+>;
+
+our enum SubpixelOrder is export <
+    SUBPIXEL_ORDER_DEFAULT
+    SUBPIXEL_ORDER_RGB
+    SUBPIXEL_ORDER_BGR
+    SUBPIXEL_ORDER_VRGB
+    SUBPIXEL_ORDER_VBGR
+>;
+
+our enum cairo_hint_style_t is export <
+    CAIRO_HINT_STYLE_DEFAULT
+    CAIRO_HINT_STYLE_NONE
+    CAIRO_HINT_STYLE_SLIGHT
+    CAIRO_HINT_STYLE_MEDIUM
+    CAIRO_HINT_STYLE_FULL
+>;
+
+our enum HintStyle is export <
+    HINT_STYLE_DEFAULT
+    HINT_STYLE_NONE
+    HINT_STYLE_SLIGHT
+    HINT_STYLE_MEDIUM
+    HINT_STYLE_FULL
+>;
+
+our enum cairo_hint_metrics_t is export <
+    CAIRO_HINT_METRICS_DEFAULT
+    CAIRO_HINT_METRICS_OFF
+    CAIRO_HINT_METRICS_ON
+>;
+
+our enum HintMetrics is export <
+    HINT_METRICS_DEFAULT
+    HINT_METRICS_OFF
+    HINT_METRICS_ON
+>;
+
+our enum cairo_antialias_t is export <
+  CAIRO_ANTIALIAS_DEFAULT
+  CAIRO_ANTIALIAS_NONE
+  CAIRO_ANTIALIAS_GRAY
+  CAIRO_ANTIALIAS_SUBPIXEL
+  CAIRO_ANTIALIAS_FAST
+  CAIRO_ANTIALIAS_GOOD
+  CAIRO_ANTIALIAS_BEST
+>;
+
+class cairo_font_options_t is repr('CPointer') {
+
+    method copy
+        returns cairo_font_options_t
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_font_options_destroy')
+        {*}
+
+    method status
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_status')
+        {*}
+
+    method merge(cairo_font_options_t $other)
+        is native($cairolib)
+        is symbol('cairo_font_options_merge')
+        {*}
+
+    method hash
+        returns uint64
+        is native($cairolib)
+        is symbol('cairo_font_options_hash')
+        {*}
+
+    method equal(cairo_font_options_t $opts)
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+    method set_antialias(uint32 $aa)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_antialias')
+        {*}
+
+    method get_antialias
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_antialias')
+        {*}
+
+    method set_subpixel_order(uint32 $order)
+        is native($cairolib)
+        is symbol('cairo_font_options_create_subpixel_order')
+        {*}
+
+    method get_subpixel_order
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create_get_subpixel_order')
+        {*}
+
+    method set_hint_style(uint32 $style)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_style')
+        {*}
+
+    method get_hint_style
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+    method set_hint_metrics(uint32 $metrics)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_metrics')
+        {*}
+
+    method get_hint_metrics
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+}
+
 our class Matrix  { ... }
 our class Surface { ... }
 our class Image   { ... }
@@ -673,7 +813,18 @@ our class Pattern { ... }
 our class Context { ... }
 our class Font    { ... }
 
-our enum Format (
+# Backwards compatibility
+our enum cairo_format_t is export (
+  CAIRO_FORMAT_INVALID   => -1,
+  CAIRO_FORMAT_ARGB32    => 0,
+  CAIRO_FORMAT_RGB24     => 1,
+  CAIRO_FORMAT_A8        => 2,
+  CAIRO_FORMAT_A1        => 3,
+  CAIRO_FORMAT_RGB16_565 => 4,
+  CAIRO_FORMAT_RGB30     => 5
+);
+
+our enum Format is export (
      FORMAT_INVALID => -1,
     "FORMAT_ARGB32"   ,
     "FORMAT_RGB24"    ,
@@ -683,7 +834,40 @@ our enum Format (
     "FORMAT_RGB30"    ,
 );
 
-our enum Operator <
+# Backwards compatibility
+our enum cairo_operator_t is export <
+  CAIRO_OPERATOR_CLEAR
+  CAIRO_OPERATOR_SOURCE
+  CAIRO_OPERATOR_OVER
+  CAIRO_OPERATOR_IN
+  CAIRO_OPERATOR_OUT
+  CAIRO_OPERATOR_ATOP
+  CAIRO_OPERATOR_DEST
+  CAIRO_OPERATOR_DEST_OVER
+  CAIRO_OPERATOR_DEST_IN
+  CAIRO_OPERATOR_DEST_OUT
+  CAIRO_OPERATOR_DEST_ATOP
+  CAIRO_OPERATOR_XOR
+  CAIRO_OPERATOR_ADD
+  CAIRO_OPERATOR_SATURATE
+  CAIRO_OPERATOR_MULTIPLY
+  CAIRO_OPERATOR_SCREEN
+  CAIRO_OPERATOR_OVERLAY
+  CAIRO_OPERATOR_DARKEN
+  CAIRO_OPERATOR_LIGHTEN
+  CAIRO_OPERATOR_COLOR_DODGE
+  CAIRO_OPERATOR_COLOR_BURN
+  CAIRO_OPERATOR_HARD_LIGHT
+  CAIRO_OPERATOR_SOFT_LIGHT
+  CAIRO_OPERATOR_DIFFERENCE
+  CAIRO_OPERATOR_EXCLUSION
+  CAIRO_OPERATOR_HSL_HUE
+  CAIRO_OPERATOR_HSL_SATURATION
+  CAIRO_OPERATOR_HSL_COLOR
+  CAIRO_OPERATOR_HSL_LUMINOSITY
+>;
+
+our enum Operator is export <
     OPERATOR_CLEAR
 
     OPERATOR_SOURCE
@@ -719,25 +903,25 @@ our enum Operator <
     OPERATOR_HSL_LUMINOSITY
 >;
 
-our enum LineCap <
+our enum LineCap is export <
     LINE_CAP_BUTT
     LINE_CAP_ROUND
     LINE_CAP_SQUARE
 >;
 
-our enum LineJoin <
+our enum LineJoin is export <
     LINE_JOIN_MITER
     LINE_JOIN_ROUND
     LINE_JOIN_BEVEL
 >;
 
-our enum Content (
+our enum Content is export (
     CONTENT_COLOR => 0x1000,
     CONTENT_ALPHA => 0x2000,
     CONTENT_COLOR_ALPHA => 0x3000,
 );
 
-our enum Antialias <
+our enum Antialias is export <
     ANTIALIAS_DEFAULT
     ANTIALIAS_NONE
     ANTIALIAS_GRAY
@@ -747,25 +931,25 @@ our enum Antialias <
     ANTIALIAS_BEST
 >;
 
-our enum FontWeight <
+our enum FontWeight is export <
     FONT_WEIGHT_NORMAL
     FONT_WEIGHT_BOLD
 >;
 
-our enum FontSlant <
+our enum FontSlant is export <
     FONT_SLANT_NORMAL
     FONT_SLANT_ITALIC
     FONT_SLANT_OBLIQUE
 >;
 
-our enum Extend <
+our enum Extend is export <
     EXTEND_NONE
     EXTEND_REPEAT
     EXTEND_REFLECT
     CAIRO_EXTEND_PAD
 >;
 
-our enum FillRule <
+our enum FillRule is export <
     FILL_RULE_WINDING
     FILL_RULE_EVEN_ODD
 >;
@@ -820,9 +1004,9 @@ class Surface {
     has cairo_surface_t $.surface handles <reference destroy flush finish show_page>;
 
     method write_png(Str $filename) {
-        my $result = $!surface.write_to_png($filename);
-        fail cairo_status_t($result) if $result != STATUS_SUCCESS;
-        cairo_status_t($result);
+        my $result = CairoStatus( $!surface.write_to_png($filename) );
+        fail $result if $result != STATUS_SUCCESS;
+        $result;
     }
 
     method Blob(UInt :$size = 64_000 --> Blob) {
@@ -1093,7 +1277,7 @@ class Context {
         is native($cairolib)
         {*}
 
-    has cairo_t $!context handles <
+    has cairo_t $.context handles <
         status destroy push_group pop_group_to_source sub_path append_path
         save restore paint close_path new_path identity_matrix
     >;
@@ -1360,6 +1544,45 @@ class Context {
 
 }
 
+class Path {
+  has cairo_path_t $.path handles <data num_data>;
+
+  submethod BUILD ($!path) { }
+
+  method AT-POS(|) {
+    die 'Sorry! Cairo::Path is an iterated list, not an array.'
+  }
+
+  method get_data(Int $i) {
+    nativecast( CArray[cairo_path_data_t], $!path.data[$i] );
+  }
+
+  method iterator {
+    my $oc = self;
+    my $path = $!path;
+
+    class :: does Iterator {
+      has $.index is rw = 0;
+
+      method pull-one {
+        my $r := $path.num_data > $.index ??
+          $oc.get_data($.index) !! IterationEnd;
+        $.index += $r.header.length;
+        $r;
+      }
+    }.new;
+  }
+
+  method new (cairo_path_t $path) {
+    self.bless(:$path);
+  }
+
+  method destroy {
+    $!path.destroy;
+  }
+}
+
+
 class Font {
     sub cairo_ft_font_face_create_for_ft_face(Pointer $ft-face, int32 $flags)
         returns cairo_font_face_t
@@ -1373,4 +1596,70 @@ class Font {
                                                                 $flags )
                  )
       }
+}
+
+class FontOptions {
+
+  sub font_options_create()
+      returns cairo_font_options_t
+      is native($cairolib)
+      is symbol('cairo_font_options_create')
+      {*}
+
+  has cairo_font_options_t $.font_options handles <destroy hash>;
+
+  submethod BUILD($!font_options) { }
+
+  multi method new(cairo_font_options_t $font_options) {
+    self.bless(:$font_options);
+  }
+  multi method new {
+    my $font_options = font_options_create();
+    self.bless(:$font_options);
+  }
+
+  method status {
+    CairoStatus( $.font_options.status );
+  }
+
+  method merge($other) {
+    $.font_options.merge($other);
+  }
+
+  method equal(cairo_font_options_t $b) {
+    so $.font_options.equals($b);
+  }
+
+  method set_antialias(Int(Cool) $aa) {
+    $.font_options.set_antialias($.font_options, $aa);
+  }
+
+  method get_antialias {
+    Antialias( $.font.options.get_antialias );
+  }
+
+  method set_subpixel_order(Int(Cool) $order) {
+    $.font_options.set_subpixel_order($order);
+  }
+
+  method get_subpixel_order {
+    SubpixelOrder( $.font_options.get_subpixel_order );
+  }
+
+  method set_hint_style(Int(Cool) $style) {
+    $.font_options.set_hint_style($style);
+  }
+
+  method get_hint_style {
+    HintStyle( $.font_options.get_hint_style );
+  }
+
+  method set_hint_metrics(Int(Cool) $metrics) {
+    $.font_options.set_hint_metrics($metrics);
+  }
+
+  method get_hint_metrics {
+    HintMetrics( $.font.options.get_metrics );
+  }
+
 }
