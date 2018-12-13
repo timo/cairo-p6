@@ -237,7 +237,7 @@ our class cairo_path_data_t is repr('CUnion') is export {
 
 our class cairo_path_t is repr('CStruct') is export {
   has uint32                    $.status;   # cairo_path_data_type_t
-  has CArray[cairo_path_data_t] $.data;
+  has Pointer[cairo_path_data_t] $.data;
   has int32                     $.num_data;
 
   sub path_destroy(cairo_path_t)
@@ -353,6 +353,88 @@ our class cairo_pattern_t is repr('CPointer') {
 
 }
 
+class cairo_font_options_t is repr('CPointer') {
+
+    method copy
+        returns cairo_font_options_t
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_font_options_destroy')
+        {*}
+
+    method status
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_status')
+        {*}
+
+    method merge(cairo_font_options_t $other)
+        is native($cairolib)
+        is symbol('cairo_font_options_merge')
+        {*}
+
+    method hash
+        returns uint64
+        is native($cairolib)
+        is symbol('cairo_font_options_hash')
+        {*}
+
+    method equal(cairo_font_options_t $opts)
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_equal')
+        {*}
+
+    method set_antialias(uint32 $aa)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_antialias')
+        {*}
+
+    method get_antialias
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_antialias')
+        {*}
+
+    method set_subpixel_order(uint32 $order)
+        is native($cairolib)
+        is symbol('cairo_font_options_create_subpixel_order')
+        {*}
+
+    method get_subpixel_order
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create_get_subpixel_order')
+        {*}
+
+    method set_hint_style(uint32 $style)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_style')
+        {*}
+
+    method get_hint_style
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_hint_style')
+        {*}
+
+    method set_hint_metrics(uint32 $metrics)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_metrics')
+        {*}
+
+    method get_hint_metrics
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_hint_metrics')
+        {*}
+
+}
+
 our class cairo_t is repr('CPointer') {
 
     method destroy
@@ -412,6 +494,11 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_move_to')
         {*}
 
+    method curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
+        is native($cairolib)
+        is symbol('cairo_curve_to')
+        {*}
+
     method rel_line_to(num64 $x, num64 $y)
         is native($cairolib)
         is symbol('cairo_rel_line_to')
@@ -422,7 +509,7 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_rel_move_to')
         {*}
 
-    method curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
+    method rel_curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
         is native($cairolib)
         is symbol('cairo_curve_to')
         {*}
@@ -667,6 +754,25 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_font_extents')
         {*}
 
+    method set_tolerance(num64 $tolerance)
+        is native($cairolib)
+        is symbol('cairo_set_tolerance')
+        {*}
+
+    method get_tolerance()
+        returns num64
+        is native($cairolib)
+        is symbol('cairo_get_tolerance')
+        {*}
+
+    method set_font_options(cairo_font_options_t $options)
+        is native($cairolib)
+        is symbol('cairo_set_font_options')
+        {*}
+    method get_font_options()
+        is native($cairolib)
+        is symbol('cairo_get_font_options')
+        {*}
 }
 
 # Backwards compatibility
@@ -723,88 +829,6 @@ our enum cairo_antialias_t is export <
   CAIRO_ANTIALIAS_GOOD
   CAIRO_ANTIALIAS_BEST
 >;
-
-class cairo_font_options_t is repr('CPointer') {
-
-    method copy
-        returns cairo_font_options_t
-        is native($cairolib)
-        is symbol('cairo_font_options_create')
-        {*}
-
-    method destroy
-        is native($cairolib)
-        is symbol('cairo_font_options_destroy')
-        {*}
-
-    method status
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_status')
-        {*}
-
-    method merge(cairo_font_options_t $other)
-        is native($cairolib)
-        is symbol('cairo_font_options_merge')
-        {*}
-
-    method hash
-        returns uint64
-        is native($cairolib)
-        is symbol('cairo_font_options_hash')
-        {*}
-
-    method equal(cairo_font_options_t $opts)
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_create')
-        {*}
-
-    method set_antialias(uint32 $aa)
-        is native($cairolib)
-        is symbol('cairo_font_options_set_antialias')
-        {*}
-
-    method get_antialias
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_get_antialias')
-        {*}
-
-    method set_subpixel_order(uint32 $order)
-        is native($cairolib)
-        is symbol('cairo_font_options_create_subpixel_order')
-        {*}
-
-    method get_subpixel_order
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_create_get_subpixel_order')
-        {*}
-
-    method set_hint_style(uint32 $style)
-        is native($cairolib)
-        is symbol('cairo_font_options_set_hint_style')
-        {*}
-
-    method get_hint_style
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_create')
-        {*}
-
-    method set_hint_metrics(uint32 $metrics)
-        is native($cairolib)
-        is symbol('cairo_font_options_set_hint_metrics')
-        {*}
-
-    method get_hint_metrics
-        returns uint32
-        is native($cairolib)
-        is symbol('cairo_font_options_create')
-        {*}
-
-}
 
 our class Matrix  { ... }
 our class Surface { ... }
@@ -1271,6 +1295,8 @@ class Pattern::Gradient::Radial is Pattern::Gradient {
 
 }
 
+class Path { ... }
+
 class Context {
     sub cairo_create(cairo_surface_t $surface)
         returns cairo_t
@@ -1278,7 +1304,7 @@ class Context {
         {*}
 
     has cairo_t $.context handles <
-        status destroy push_group pop_group_to_source sub_path append_path
+        status destroy push_group pop_group_to_source sub_path
         save restore paint close_path new_path identity_matrix
     >;
 
@@ -1297,11 +1323,15 @@ class Context {
         Pattern.new($!context.pop_group);
     }
 
+    method append_path(cairo_path_t() $path) {
+      $!context.append_path($path);
+    }
+
     multi method copy_path() {
-        $!context.copy_path
+        Path.new($!context.copy_path);
     }
     multi method copy_path(:$flat! where .so) {
-        $!context.copy_path_flat
+        Path.new($!context.copy_path_flat)
     }
 
     method memoize_path($storage is rw, &creator, :$flat?) {
@@ -1390,6 +1420,9 @@ class Context {
 
     multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3) {
         $!context.curve_to($x1, $y1, $x2, $y2, $x3, $y3);
+    }
+    multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3, :$relative! where .so) {
+        $!context.rel_curve_to($x1, $y1, $x2, $y2, $x3, $y3);
     }
 
     multi method arc(Num(Cool) $xc, Num(Cool) $yc, Num(Cool) $radius, Num(Cool) $angle1, Num(Cool) $angle2, :$negative! where .so) {
@@ -1532,6 +1565,17 @@ class Context {
             STORE => -> \c, \value { $!context.set_line_width(value.Num) }
     }
 
+    method tolerance() is rw {
+        Proxy.new:
+            FETCH => { $!context.get_tolerance},
+            STORE => -> \c, \value { $!context.set_tolerance(value.Num) }
+    }
+    method font_options() is rw {
+        Proxy.new:
+            FETCH => { $!context.get_font_options},
+            STORE => -> \c, cairo_font_options_t() \value { $!context.set_font_options(value) }
+    }
+
     method matrix() is rw {
         Proxy.new:
             FETCH => {
@@ -1547,14 +1591,18 @@ class Context {
 class Path {
   has cairo_path_t $.path handles <data num_data>;
 
-  submethod BUILD ($!path) { }
+  submethod BUILD (:$!path) { }
+
+  method Cairo::cairo_path_t { $.path }
 
   method AT-POS(|) {
     die 'Sorry! Cairo::Path is an iterated list, not an array.'
   }
 
   method get_data(Int $i) {
-    nativecast( CArray[cairo_path_data_t], $!path.data[$i] );
+    my $a = [];
+    $a[$_] := $!path.data[$i + $_] for ^$!path.data[$i].header.length;
+    $a;
   }
 
   method iterator {
@@ -1565,9 +1613,13 @@ class Path {
       has $.index is rw = 0;
 
       method pull-one {
-        my $r := $path.num_data > $.index ??
-          $oc.get_data($.index) !! IterationEnd;
-        $.index += $r.header.length;
+        my $r;
+        if $path.num_data > $.index {
+          $r = $oc.get_data($.index);
+          $.index += $r.elems;
+        } else {
+          $r := IterationEnd;
+        }
         $r;
       }
     }.new;
@@ -1608,13 +1660,17 @@ class FontOptions {
 
   has cairo_font_options_t $.font_options handles <destroy hash>;
 
-  submethod BUILD($!font_options) { }
+  submethod BUILD(:$!font_options) { }
 
-  multi method new(cairo_font_options_t $font_options) {
-    self.bless(:$font_options);
+  method Cairo::cairo_font_options_t {
+    $.font_options;
   }
+
   multi method new {
     my $font_options = font_options_create();
+    self.bless(:$font_options);
+  }
+  multi method new (cairo_font_options_t $font_options) {
     self.bless(:$font_options);
   }
 
@@ -1630,36 +1686,25 @@ class FontOptions {
     so $.font_options.equals($b);
   }
 
-  method set_antialias(Int(Cool) $aa) {
-    $.font_options.set_antialias($.font_options, $aa);
+  method antialias() is rw {
+      Proxy.new:
+          FETCH => { Antialias( $.font_options.get_antialias ) },
+          STORE => -> \c, \value { $.font_options.set_antialias(value.Int) }
   }
-
-  method get_antialias {
-    Antialias( $.font.options.get_antialias );
+  method subpixel_order() is rw {
+      Proxy.new:
+          FETCH => { SubpixelOrder( $.font_options.get_subpixel_order ) },
+          STORE => -> \c, \value { $.font_options.set_subpixel_order(value.Int) }
   }
-
-  method set_subpixel_order(Int(Cool) $order) {
-    $.font_options.set_subpixel_order($order);
+  method hint_style() is rw {
+      Proxy.new:
+          FETCH => { HintStyle( $.font_options.get_hint_style ) },
+          STORE => -> \c, \value { $.font_options.set_hint_style(value.Int) }
   }
-
-  method get_subpixel_order {
-    SubpixelOrder( $.font_options.get_subpixel_order );
-  }
-
-  method set_hint_style(Int(Cool) $style) {
-    $.font_options.set_hint_style($style);
-  }
-
-  method get_hint_style {
-    HintStyle( $.font_options.get_hint_style );
-  }
-
-  method set_hint_metrics(Int(Cool) $metrics) {
-    $.font_options.set_hint_metrics($metrics);
-  }
-
-  method get_hint_metrics {
-    HintMetrics( $.font.options.get_metrics );
+  method hint_metrics() is rw {
+    Proxy.new:
+          FETCH => { HintMetrics( $.font_options.get_hint_metrics ) },
+          STORE => -> \c, \value { $.font_options.set_hint_metrics(value.Int) }
   }
 
 }
