@@ -223,8 +223,8 @@ our class cairo_path_data_header_t  is repr('CStruct') {
   has int32      $.length;
 }
 our class cairo_path_data_point_t is repr('CStruct') {
-  has num64 $.x;
-  has num64 $.y;
+  has num64 $.x is rw;
+  has num64 $.y is rw;
 }
 our class cairo_path_data_t is repr('CUnion') is export {
   HAS cairo_path_data_header_t $.header;
@@ -511,7 +511,7 @@ our class cairo_t is repr('CPointer') {
 
     method rel_curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
         is native($cairolib)
-        is symbol('cairo_curve_to')
+        is symbol('cairo_rel_curve_to')
         {*}
 
     method arc(num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
@@ -1521,6 +1521,9 @@ class Context {
 
     multi method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset) {
         $!context.set_dash($dashes, $len, $offset);
+    }
+    multi method set_dash(@dashes, Num(Cool) $offset = 0) {
+        samewith(@dashes.List, @dashes.elems, $offset);
     }
     multi method set_dash(List $dashes, Int(Cool) $len, Num(Cool) $offset) {
         my $d = CArray[num64].new;
