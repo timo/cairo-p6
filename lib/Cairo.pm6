@@ -138,6 +138,12 @@ my class StreamClosure is repr('CStruct') is rw {
 
 our class cairo_surface_t is repr('CPointer') {
 
+    method status
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_surface_status')
+        {*}
+
     method write_to_png(Str $filename)
         returns int32
         is native($cairolib)
@@ -230,9 +236,10 @@ our class cairo_path_data_t is repr('CUnion') is export {
   HAS cairo_path_data_header_t $.header;
   HAS cairo_path_data_point_t  $.point;
 
-  method data-type {
-    PathDataTypes( self.header.type )
-  }
+  method data-type { PathDataTypes( self.header.type ) }
+  method length    { self.header.length                }
+  method x is rw   { self.point.x                      }
+  method y is rw   { self.point.y                      }
 }
 
 our class cairo_path_t is repr('CStruct') is export {
@@ -484,6 +491,10 @@ our class cairo_t is repr('CPointer') {
         {*}
 
 
+    method get_current_point(num64 $x is rw, num64 $y is rw)
+        is native($cairolib)
+        is symbol('cairo_get_current_point')
+        {*}
     method line_to(num64 $x, num64 $y)
         is native($cairolib)
         is symbol('cairo_line_to')
@@ -1025,7 +1036,7 @@ class Matrix {
 }
 
 class Surface {
-    has cairo_surface_t $.surface handles <reference destroy flush finish show_page>;
+    has cairo_surface_t $.surface handles <reference destroy flush finish show_page status>;
 
     method write_png(Str $filename) {
         my $result = CairoStatus( $!surface.write_to_png($filename) );
@@ -1125,7 +1136,15 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_image_surface_create_for_data(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+    sub cairo_image_surface_create_for_data_ca(CArray[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_create_for_data_b(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_create_for_data(Pointer $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
         is native($cairolib)
         {*}
@@ -1151,17 +1170,39 @@ class Image is Surface {
         return self.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
-    multi method create(Format $format, Cool $width, Cool $height, Blob[uint8] $data, Cool $stride?) {
+    multi method create(Format $format, Cool $width, Cool $height, $data, Cool $stride? is copy) {
         if $stride eqv False {
             $stride = $width.Int;
         } elsif $stride eqv True {
             $stride = cairo_format_stride_for_width($format.Int, $width.Int);
         }
-        return self.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
+        my $d = do given $data {
+          when Array[uint8]     { my $tmp = CArray[uint8].new($_);
+                                  $_ = $tmp;
+                                  proceed; }
+          when Buf[uint8]       { my $tmp = nativecast(Blob[uint8], $_);
+                                  $_ = $tmp;
+                                  proceed; }
+          when CArray[uint8]  |
+               Blob[uint8]    |
+               Pointer          { $_ }
+
+          default {
+            die qq:to/D/;
+              Invalid type: { .^name }
+              Cairo::Image.create only supports variables of type: {
+              '' }Array[uint8], CArray[uint8], Blob[uint8] and Pointer.
+              D
+          }
+        }
+        return self.new(surface => do given $d {
+          when CArray  { cairo_image_surface_create_for_data_ca($d, $format.Int, $width.Int, $height.Int, $stride) }
+          when Blob    { cairo_image_surface_create_for_data_b($d, $format.Int, $width.Int, $height.Int, $stride) }
+          when Pointer { cairo_image_surface_create_for_data($d, $format.Int, $width.Int, $height.Int, $stride) }
+        });
     }
 
     multi method create(Blob[uint8] $data, Int(Cool) $buf-len = $data.elems) {
-
         my $buf = CArray[uint8].new: $data;
         my $closure = StreamClosure.new: :$buf, :$buf-len, :n-read(0);
         return self.new(surface => cairo_image_surface_create_from_png_stream(&StreamClosure::read, $closure));
@@ -1418,6 +1459,16 @@ class Context {
         $!context.rel_line_to($x, $y);
     }
 
+    multi method get_current_point {
+        my Num ($x, $y);
+        samewith($x, $y);
+    }
+    multi method get_current_point(Num $x is rw, Num $y is rw) {
+        my num64 ($xx, $yy) = (0.Num, 0.Num);
+        $!context.get_current_point($xx, $yy);
+        ($x, $y) = ($xx, $yy);
+    }
+
     multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3) {
         $!context.curve_to($x1, $y1, $x2, $y2, $x3, $y3);
     }
@@ -1604,7 +1655,7 @@ class Path {
 
   method get_data(Int $i) {
     my $a = [];
-    $a[$_] := $!path.data[$i + $_] for ^$!path.data[$i].header.length;
+    $a[$_] := $!path.data[$i + $_] for ^$!path.data[$i].length;
     $a;
   }
 
