@@ -223,39 +223,7 @@ our enum PathDataTypes is export <
 >;
 
 our class cairo_rectangle_t is repr('CPointer') { }
-
-our class cairo_path_data_header_t  is repr('CStruct') {
-  has uint32     $.type;
-  has int32      $.length;
-}
-our class cairo_path_data_point_t is repr('CStruct') {
-  has num64 $.x is rw;
-  has num64 $.y is rw;
-}
-our class cairo_path_data_t is repr('CUnion') is export {
-  HAS cairo_path_data_header_t $.header;
-  HAS cairo_path_data_point_t  $.point;
-
-  method data-type { PathDataTypes( self.header.type ) }
-  method length    { self.header.length                }
-  method x is rw   { self.point.x                      }
-  method y is rw   { self.point.y                      }
-}
-
-our class cairo_path_t is repr('CStruct') is export {
-  has uint32                    $.status;   # cairo_path_data_type_t
-  has Pointer[cairo_path_data_t] $.data;
-  has int32                     $.num_data;
-
-  sub path_destroy(cairo_path_t)
-    is symbol('cairo_path_destroy')
-    is native($cairolib)
-    {*}
-
-  method destroy {
-    path_destroy(self);
-  }
-}
+our class cairo_path_t is repr('CPointer') { }
 
 our class cairo_text_extents_t is repr('CStruct') {
     has num64 $.x_bearing;
@@ -1641,53 +1609,6 @@ class Context {
     }
 
 }
-
-class Path {
-  has cairo_path_t $.path handles <data num_data>;
-
-  submethod BUILD (:$!path) { }
-
-  method Cairo::cairo_path_t { $.path }
-
-  method AT-POS(|) {
-    die 'Sorry! Cairo::Path is an iterated list, not an array.'
-  }
-
-  method get_data(Int $i) {
-    my $a = [];
-    $a[$_] := $!path.data[$i + $_] for ^$!path.data[$i].length;
-    $a;
-  }
-
-  method iterator {
-    my $oc = self;
-    my $path = $!path;
-
-    class :: does Iterator {
-      has $.index is rw = 0;
-
-      method pull-one {
-        my $r;
-        if $path.num_data > $.index {
-          $r = $oc.get_data($.index);
-          $.index += $r.elems;
-        } else {
-          $r := IterationEnd;
-        }
-        $r;
-      }
-    }.new;
-  }
-
-  method new (cairo_path_t $path) {
-    self.bless(:$path);
-  }
-
-  method destroy {
-    $!path.destroy;
-  }
-}
-
 
 class Font {
     sub cairo_ft_font_face_create_for_ft_face(Pointer $ft-face, int32 $flags)
