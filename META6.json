@@ -4,7 +4,7 @@
     "description" : "Cairo 2D graphics library",
     "version" : "0.2.4",
     "depends" : [ ],
-    "source-url" : "git://github.com/timo/cairo-p6.git",
+    "source-url" : "https://github.com/timo/cairo-p6.git",
     "tags"          : [ "png", "pdf", "svg" ],
     "provides" : {
       "Cairo" : "lib/Cairo.pm6",
@@ -33,6 +33,6 @@
       "Cairo::Surface::SVG" : "lib/Cairo.pm6"
     },
     "support" : {
-      "source" : "git://github.com/timo/cairo-p6.git"
+      "source" : "https://github.com/timo/cairo-p6.git"
     }
 }
