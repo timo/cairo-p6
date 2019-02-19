@@ -243,9 +243,9 @@ our class cairo_path_data_t is repr('CUnion') is export {
 }
 
 our class cairo_path_t is repr('CStruct') is export {
-  has uint32                    $.status;   # cairo_path_data_type_t
+  has uint32                     $.status;   # cairo_path_data_type_t
   has Pointer[cairo_path_data_t] $.data;
-  has int32                     $.num_data;
+  has int32                      $.num_data;
 
   sub path_destroy(cairo_path_t)
     is symbol('cairo_path_destroy')
@@ -938,10 +938,22 @@ our enum Operator is export <
     OPERATOR_HSL_LUMINOSITY
 >;
 
+our enum cairo_line_cap is export <
+  CAIRO_LINE_CAP_BUTT
+  CAIRO_LINE_CAP_ROUND
+  CAIRO_LINE_CAP_SQUARE
+>;
+
 our enum LineCap is export <
     LINE_CAP_BUTT
     LINE_CAP_ROUND
     LINE_CAP_SQUARE
+>;
+
+our enum cairo_line_join is export <
+    CAIRO_LINE_JOIN_MITER
+    CAIRO_LINE_JOIN_ROUND
+    CAIRO_LINE_JOIN_BEVEL
 >;
 
 our enum LineJoin is export <
@@ -1166,11 +1178,11 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    multi method create(Format $format, Cool $width, Cool $height) {
+    multi method create(Int() $format, Cool $width, Cool $height) {
         return self.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
-    multi method create(Format $format, Cool $width, Cool $height, $data, Cool $stride? is copy) {
+    multi method create(Int() $format, Cool $width, Cool $height, $data, Cool $stride? is copy) {
         if $stride eqv False {
             $stride = $width.Int;
         } elsif $stride eqv True {
