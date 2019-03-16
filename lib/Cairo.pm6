@@ -55,48 +55,6 @@ our enum cairo_status_t is export <
     CAIRO_STATUS_LAST_STATUS
 >;
 
-our enum cairo_operator_t is export <
-  CAIRO_OPERATOR_CLEAR
-  CAIRO_OPERATOR_SOURCE
-  CAIRO_OPERATOR_OVER
-  CAIRO_OPERATOR_IN
-  CAIRO_OPERATOR_OUT
-  CAIRO_OPERATOR_ATOP
-  CAIRO_OPERATOR_DEST
-  CAIRO_OPERATOR_DEST_OVER
-  CAIRO_OPERATOR_DEST_IN
-  CAIRO_OPERATOR_DEST_OUT
-  CAIRO_OPERATOR_DEST_ATOP
-  CAIRO_OPERATOR_XOR
-  CAIRO_OPERATOR_ADD
-  CAIRO_OPERATOR_SATURATE
-  CAIRO_OPERATOR_MULTIPLY
-  CAIRO_OPERATOR_SCREEN
-  CAIRO_OPERATOR_OVERLAY
-  CAIRO_OPERATOR_DARKEN
-  CAIRO_OPERATOR_LIGHTEN
-  CAIRO_OPERATOR_COLOR_DODGE
-  CAIRO_OPERATOR_COLOR_BURN
-  CAIRO_OPERATOR_HARD_LIGHT
-  CAIRO_OPERATOR_SOFT_LIGHT
-  CAIRO_OPERATOR_DIFFERENCE
-  CAIRO_OPERATOR_EXCLUSION
-  CAIRO_OPERATOR_HSL_HUE
-  CAIRO_OPERATOR_HSL_SATURATION
-  CAIRO_OPERATOR_HSL_COLOR
-  CAIRO_OPERATOR_HSL_LUMINOSITY
->;
-
-our enum cairo_format_t is export (
-  CAIRO_FORMAT_INVALID   => -1,
-  CAIRO_FORMAT_ARGB32    => 0,
-  CAIRO_FORMAT_RGB24     => 1,
-  CAIRO_FORMAT_A8        => 2,
-  CAIRO_FORMAT_A1        => 3,
-  CAIRO_FORMAT_RGB16_565 => 4,
-  CAIRO_FORMAT_RGB30     => 5
-);
-
 our enum CairoStatus is export <
     STATUS_SUCCESS
 
@@ -180,6 +138,12 @@ my class StreamClosure is repr('CStruct') is rw {
 
 our class cairo_surface_t is repr('CPointer') {
 
+    method status
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_surface_status')
+        {*}
+
     method write_to_png(Str $filename)
         returns int32
         is native($cairolib)
@@ -243,9 +207,55 @@ our class cairo_surface_t is repr('CPointer') {
 
 }
 
+# Backwards Compatibility
+our enum cairo_path_data_type_t is export <
+  CAIRO_PATH_MOVE_TO
+  CAIRO_PATH_LINE_TO
+  CAIRO_PATH_CURVE_TO
+  CAIRO_PATH_CLOSE_PATH
+>;
+
+our enum PathDataTypes is export <
+  PATH_MOVE_TO
+  PATH_LINE_TO
+  PATH_CURVE_TO
+  PATH_CLOSE_PATH
+>;
+
 our class cairo_rectangle_t is repr('CPointer') { }
 
-our class cairo_path_t is repr('CPointer') { }
+our class cairo_path_data_header_t  is repr('CStruct') {
+  has uint32     $.type;
+  has int32      $.length;
+}
+our class cairo_path_data_point_t is repr('CStruct') {
+  has num64 $.x is rw;
+  has num64 $.y is rw;
+}
+our class cairo_path_data_t is repr('CUnion') is export {
+  HAS cairo_path_data_header_t $.header;
+  HAS cairo_path_data_point_t  $.point;
+
+  method data-type { PathDataTypes( self.header.type ) }
+  method length    { self.header.length                }
+  method x is rw   { self.point.x                      }
+  method y is rw   { self.point.y                      }
+}
+
+our class cairo_path_t is repr('CStruct') is export {
+  has uint32                     $.status;   # cairo_path_data_type_t
+  has Pointer[cairo_path_data_t] $.data;
+  has int32                      $.num_data;
+
+  sub path_destroy(cairo_path_t)
+    is symbol('cairo_path_destroy')
+    is native($cairolib)
+    {*}
+
+  method destroy {
+    path_destroy(self);
+  }
+}
 
 our class cairo_text_extents_t is repr('CStruct') {
     has num64 $.x_bearing;
@@ -350,6 +360,88 @@ our class cairo_pattern_t is repr('CPointer') {
 
 }
 
+class cairo_font_options_t is repr('CPointer') {
+
+    method copy
+        returns cairo_font_options_t
+        is native($cairolib)
+        is symbol('cairo_font_options_create')
+        {*}
+
+    method destroy
+        is native($cairolib)
+        is symbol('cairo_font_options_destroy')
+        {*}
+
+    method status
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_status')
+        {*}
+
+    method merge(cairo_font_options_t $other)
+        is native($cairolib)
+        is symbol('cairo_font_options_merge')
+        {*}
+
+    method hash
+        returns uint64
+        is native($cairolib)
+        is symbol('cairo_font_options_hash')
+        {*}
+
+    method equal(cairo_font_options_t $opts)
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_equal')
+        {*}
+
+    method set_antialias(uint32 $aa)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_antialias')
+        {*}
+
+    method get_antialias
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_antialias')
+        {*}
+
+    method set_subpixel_order(uint32 $order)
+        is native($cairolib)
+        is symbol('cairo_font_options_create_subpixel_order')
+        {*}
+
+    method get_subpixel_order
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_create_get_subpixel_order')
+        {*}
+
+    method set_hint_style(uint32 $style)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_style')
+        {*}
+
+    method get_hint_style
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_hint_style')
+        {*}
+
+    method set_hint_metrics(uint32 $metrics)
+        is native($cairolib)
+        is symbol('cairo_font_options_set_hint_metrics')
+        {*}
+
+    method get_hint_metrics
+        returns uint32
+        is native($cairolib)
+        is symbol('cairo_font_options_get_hint_metrics')
+        {*}
+
+}
+
 our class cairo_t is repr('CPointer') {
 
     method destroy
@@ -399,6 +491,10 @@ our class cairo_t is repr('CPointer') {
         {*}
 
 
+    method get_current_point(num64 $x is rw, num64 $y is rw)
+        is native($cairolib)
+        is symbol('cairo_get_current_point')
+        {*}
     method line_to(num64 $x, num64 $y)
         is native($cairolib)
         is symbol('cairo_line_to')
@@ -407,6 +503,11 @@ our class cairo_t is repr('CPointer') {
     method move_to(num64 $x, num64 $y)
         is native($cairolib)
         is symbol('cairo_move_to')
+        {*}
+
+    method curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
+        is native($cairolib)
+        is symbol('cairo_curve_to')
         {*}
 
     method rel_line_to(num64 $x, num64 $y)
@@ -419,9 +520,9 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_rel_move_to')
         {*}
 
-    method curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
+    method rel_curve_to(num64 $x1, num64 $y1, num64 $x2, num64 $y2, num64 $x3, num64 $y3)
         is native($cairolib)
-        is symbol('cairo_curve_to')
+        is symbol('cairo_rel_curve_to')
         {*}
 
     method arc(num64 $xc, num64 $yc, num64 $radius, num64 $angle1, num64 $angle2)
@@ -664,7 +765,81 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_font_extents')
         {*}
 
+    method set_tolerance(num64 $tolerance)
+        is native($cairolib)
+        is symbol('cairo_set_tolerance')
+        {*}
+
+    method get_tolerance()
+        returns num64
+        is native($cairolib)
+        is symbol('cairo_get_tolerance')
+        {*}
+
+    method set_font_options(cairo_font_options_t $options)
+        is native($cairolib)
+        is symbol('cairo_set_font_options')
+        {*}
+    method get_font_options()
+        is native($cairolib)
+        is symbol('cairo_get_font_options')
+        {*}
 }
+
+# Backwards compatibility
+our enum cairo_subpixel_order_t is export <
+    CAIRO_SUBPIXEL_ORDER_DEFAULT,
+    CAIRO_SUBPIXEL_ORDER_RGB,
+    CAIRO_SUBPIXEL_ORDER_BGR,
+    CAIRO_SUBPIXEL_ORDER_VRGB,
+    CAIRO_SUBPIXEL_ORDER_VBGR
+>;
+
+our enum SubpixelOrder is export <
+    SUBPIXEL_ORDER_DEFAULT
+    SUBPIXEL_ORDER_RGB
+    SUBPIXEL_ORDER_BGR
+    SUBPIXEL_ORDER_VRGB
+    SUBPIXEL_ORDER_VBGR
+>;
+
+our enum cairo_hint_style_t is export <
+    CAIRO_HINT_STYLE_DEFAULT
+    CAIRO_HINT_STYLE_NONE
+    CAIRO_HINT_STYLE_SLIGHT
+    CAIRO_HINT_STYLE_MEDIUM
+    CAIRO_HINT_STYLE_FULL
+>;
+
+our enum HintStyle is export <
+    HINT_STYLE_DEFAULT
+    HINT_STYLE_NONE
+    HINT_STYLE_SLIGHT
+    HINT_STYLE_MEDIUM
+    HINT_STYLE_FULL
+>;
+
+our enum cairo_hint_metrics_t is export <
+    CAIRO_HINT_METRICS_DEFAULT
+    CAIRO_HINT_METRICS_OFF
+    CAIRO_HINT_METRICS_ON
+>;
+
+our enum HintMetrics is export <
+    HINT_METRICS_DEFAULT
+    HINT_METRICS_OFF
+    HINT_METRICS_ON
+>;
+
+our enum cairo_antialias_t is export <
+  CAIRO_ANTIALIAS_DEFAULT
+  CAIRO_ANTIALIAS_NONE
+  CAIRO_ANTIALIAS_GRAY
+  CAIRO_ANTIALIAS_SUBPIXEL
+  CAIRO_ANTIALIAS_FAST
+  CAIRO_ANTIALIAS_GOOD
+  CAIRO_ANTIALIAS_BEST
+>;
 
 our class Matrix  { ... }
 our class Surface { ... }
@@ -673,7 +848,18 @@ our class Pattern { ... }
 our class Context { ... }
 our class Font    { ... }
 
-our enum Format (
+# Backwards compatibility
+our enum cairo_format_t is export (
+  CAIRO_FORMAT_INVALID   => -1,
+  CAIRO_FORMAT_ARGB32    => 0,
+  CAIRO_FORMAT_RGB24     => 1,
+  CAIRO_FORMAT_A8        => 2,
+  CAIRO_FORMAT_A1        => 3,
+  CAIRO_FORMAT_RGB16_565 => 4,
+  CAIRO_FORMAT_RGB30     => 5
+);
+
+our enum Format is export (
      FORMAT_INVALID => -1,
     "FORMAT_ARGB32"   ,
     "FORMAT_RGB24"    ,
@@ -683,7 +869,40 @@ our enum Format (
     "FORMAT_RGB30"    ,
 );
 
-our enum Operator <
+# Backwards compatibility
+our enum cairo_operator_t is export <
+  CAIRO_OPERATOR_CLEAR
+  CAIRO_OPERATOR_SOURCE
+  CAIRO_OPERATOR_OVER
+  CAIRO_OPERATOR_IN
+  CAIRO_OPERATOR_OUT
+  CAIRO_OPERATOR_ATOP
+  CAIRO_OPERATOR_DEST
+  CAIRO_OPERATOR_DEST_OVER
+  CAIRO_OPERATOR_DEST_IN
+  CAIRO_OPERATOR_DEST_OUT
+  CAIRO_OPERATOR_DEST_ATOP
+  CAIRO_OPERATOR_XOR
+  CAIRO_OPERATOR_ADD
+  CAIRO_OPERATOR_SATURATE
+  CAIRO_OPERATOR_MULTIPLY
+  CAIRO_OPERATOR_SCREEN
+  CAIRO_OPERATOR_OVERLAY
+  CAIRO_OPERATOR_DARKEN
+  CAIRO_OPERATOR_LIGHTEN
+  CAIRO_OPERATOR_COLOR_DODGE
+  CAIRO_OPERATOR_COLOR_BURN
+  CAIRO_OPERATOR_HARD_LIGHT
+  CAIRO_OPERATOR_SOFT_LIGHT
+  CAIRO_OPERATOR_DIFFERENCE
+  CAIRO_OPERATOR_EXCLUSION
+  CAIRO_OPERATOR_HSL_HUE
+  CAIRO_OPERATOR_HSL_SATURATION
+  CAIRO_OPERATOR_HSL_COLOR
+  CAIRO_OPERATOR_HSL_LUMINOSITY
+>;
+
+our enum Operator is export <
     OPERATOR_CLEAR
 
     OPERATOR_SOURCE
@@ -719,25 +938,37 @@ our enum Operator <
     OPERATOR_HSL_LUMINOSITY
 >;
 
-our enum LineCap <
+our enum cairo_line_cap is export <
+  CAIRO_LINE_CAP_BUTT
+  CAIRO_LINE_CAP_ROUND
+  CAIRO_LINE_CAP_SQUARE
+>;
+
+our enum LineCap is export <
     LINE_CAP_BUTT
     LINE_CAP_ROUND
     LINE_CAP_SQUARE
 >;
 
-our enum LineJoin <
+our enum cairo_line_join is export <
+    CAIRO_LINE_JOIN_MITER
+    CAIRO_LINE_JOIN_ROUND
+    CAIRO_LINE_JOIN_BEVEL
+>;
+
+our enum LineJoin is export <
     LINE_JOIN_MITER
     LINE_JOIN_ROUND
     LINE_JOIN_BEVEL
 >;
 
-our enum Content (
+our enum Content is export (
     CONTENT_COLOR => 0x1000,
     CONTENT_ALPHA => 0x2000,
     CONTENT_COLOR_ALPHA => 0x3000,
 );
 
-our enum Antialias <
+our enum Antialias is export <
     ANTIALIAS_DEFAULT
     ANTIALIAS_NONE
     ANTIALIAS_GRAY
@@ -747,25 +978,25 @@ our enum Antialias <
     ANTIALIAS_BEST
 >;
 
-our enum FontWeight <
+our enum FontWeight is export <
     FONT_WEIGHT_NORMAL
     FONT_WEIGHT_BOLD
 >;
 
-our enum FontSlant <
+our enum FontSlant is export <
     FONT_SLANT_NORMAL
     FONT_SLANT_ITALIC
     FONT_SLANT_OBLIQUE
 >;
 
-our enum Extend <
+our enum Extend is export <
     EXTEND_NONE
     EXTEND_REPEAT
     EXTEND_REFLECT
     CAIRO_EXTEND_PAD
 >;
 
-our enum FillRule <
+our enum FillRule is export <
     FILL_RULE_WINDING
     FILL_RULE_EVEN_ODD
 >;
@@ -817,12 +1048,12 @@ class Matrix {
 }
 
 class Surface {
-    has cairo_surface_t $.surface handles <reference destroy flush finish show_page>;
+    has cairo_surface_t $.surface handles <reference destroy flush finish show_page status>;
 
     method write_png(Str $filename) {
-        my $result = $!surface.write_to_png($filename);
-        fail cairo_status_t($result) if $result != STATUS_SUCCESS;
-        cairo_status_t($result);
+        my $result = CairoStatus( $!surface.write_to_png($filename) );
+        fail $result if $result != STATUS_SUCCESS;
+        $result;
     }
 
     method Blob(UInt :$size = 64_000 --> Blob) {
@@ -917,7 +1148,15 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_image_surface_create_for_data(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+    sub cairo_image_surface_create_for_data_ca(CArray[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_create_for_data_b(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
+        returns cairo_surface_t
+        is native($cairolib)
+        {*}
+    sub cairo_image_surface_create_for_data(Pointer $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
         is native($cairolib)
         {*}
@@ -939,21 +1178,43 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    multi method create(Format $format, Cool $width, Cool $height) {
+    multi method create(Int() $format, Cool $width, Cool $height) {
         return self.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
-    multi method create(Format $format, Cool $width, Cool $height, Blob[uint8] $data, Cool $stride?) {
+    multi method create(Int() $format, Cool $width, Cool $height, $data, Cool $stride? is copy) {
         if $stride eqv False {
             $stride = $width.Int;
         } elsif $stride eqv True {
             $stride = cairo_format_stride_for_width($format.Int, $width.Int);
         }
-        return self.new(surface => cairo_image_surface_create_for_data($data, $format.Int, $width.Int, $height.Int, $stride));
+        my $d = do given $data {
+          when Array[uint8]     { my $tmp = CArray[uint8].new($_);
+                                  $_ = $tmp;
+                                  proceed; }
+          when Buf[uint8]       { my $tmp = nativecast(Blob[uint8], $_);
+                                  $_ = $tmp;
+                                  proceed; }
+          when CArray[uint8]  |
+               Blob[uint8]    |
+               Pointer          { $_ }
+
+          default {
+            die qq:to/D/;
+              Invalid type: { .^name }
+              Cairo::Image.create only supports variables of type: {
+              '' }Array[uint8], CArray[uint8], Blob[uint8] and Pointer.
+              D
+          }
+        }
+        return self.new(surface => do given $d {
+          when CArray  { cairo_image_surface_create_for_data_ca($d, $format.Int, $width.Int, $height.Int, $stride) }
+          when Blob    { cairo_image_surface_create_for_data_b($d, $format.Int, $width.Int, $height.Int, $stride) }
+          when Pointer { cairo_image_surface_create_for_data($d, $format.Int, $width.Int, $height.Int, $stride) }
+        });
     }
 
     multi method create(Blob[uint8] $data, Int(Cool) $buf-len = $data.elems) {
-
         my $buf = CArray[uint8].new: $data;
         my $closure = StreamClosure.new: :$buf, :$buf-len, :n-read(0);
         return self.new(surface => cairo_image_surface_create_from_png_stream(&StreamClosure::read, $closure));
@@ -1087,14 +1348,16 @@ class Pattern::Gradient::Radial is Pattern::Gradient {
 
 }
 
+class Path { ... }
+
 class Context {
     sub cairo_create(cairo_surface_t $surface)
         returns cairo_t
         is native($cairolib)
         {*}
 
-    has cairo_t $!context handles <
-        status destroy push_group pop_group_to_source sub_path append_path
+    has cairo_t $.context handles <
+        status destroy push_group pop_group_to_source sub_path
         save restore paint close_path new_path identity_matrix
     >;
 
@@ -1113,11 +1376,15 @@ class Context {
         Pattern.new($!context.pop_group);
     }
 
+    method append_path(cairo_path_t() $path) {
+      $!context.append_path($path);
+    }
+
     multi method copy_path() {
-        $!context.copy_path
+        Path.new($!context.copy_path);
     }
     multi method copy_path(:$flat! where .so) {
-        $!context.copy_path_flat
+        Path.new($!context.copy_path_flat)
     }
 
     method memoize_path($storage is rw, &creator, :$flat?) {
@@ -1204,8 +1471,21 @@ class Context {
         $!context.rel_line_to($x, $y);
     }
 
+    multi method get_current_point {
+        my Num ($x, $y);
+        samewith($x, $y);
+    }
+    multi method get_current_point(Num $x is rw, Num $y is rw) {
+        my num64 ($xx, $yy) = (0.Num, 0.Num);
+        $!context.get_current_point($xx, $yy);
+        ($x, $y) = ($xx, $yy);
+    }
+
     multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3) {
         $!context.curve_to($x1, $y1, $x2, $y2, $x3, $y3);
+    }
+    multi method curve_to(Num(Cool) $x1, Num(Cool) $y1, Num(Cool) $x2, Num(Cool) $y2, Num(Cool) $x3, Num(Cool) $y3, :$relative! where .so) {
+        $!context.rel_curve_to($x1, $y1, $x2, $y2, $x3, $y3);
     }
 
     multi method arc(Num(Cool) $xc, Num(Cool) $yc, Num(Cool) $radius, Num(Cool) $angle1, Num(Cool) $angle2, :$negative! where .so) {
@@ -1305,6 +1585,9 @@ class Context {
     multi method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset) {
         $!context.set_dash($dashes, $len, $offset);
     }
+    multi method set_dash(@dashes, Num(Cool) $offset = 0) {
+        samewith(@dashes.List, @dashes.elems, $offset);
+    }
     multi method set_dash(List $dashes, Int(Cool) $len, Num(Cool) $offset) {
         my $d = CArray[num64].new;
         $d[$_] = $dashes[$_].Num
@@ -1348,6 +1631,17 @@ class Context {
             STORE => -> \c, \value { $!context.set_line_width(value.Num) }
     }
 
+    method tolerance() is rw {
+        Proxy.new:
+            FETCH => { $!context.get_tolerance},
+            STORE => -> \c, \value { $!context.set_tolerance(value.Num) }
+    }
+    method font_options() is rw {
+        Proxy.new:
+            FETCH => { $!context.get_font_options},
+            STORE => -> \c, cairo_font_options_t() \value { $!context.set_font_options(value) }
+    }
+
     method matrix() is rw {
         Proxy.new:
             FETCH => {
@@ -1359,6 +1653,53 @@ class Context {
     }
 
 }
+
+class Path {
+  has cairo_path_t $.path handles <data num_data>;
+
+  submethod BUILD (:$!path) { }
+
+  method Cairo::cairo_path_t { $.path }
+
+  method AT-POS(|) {
+    die 'Sorry! Cairo::Path is an iterated list, not an array.'
+  }
+
+  method get_data(Int $i) {
+    my $a = [];
+    $a[$_] := $!path.data[$i + $_] for ^$!path.data[$i].length;
+    $a;
+  }
+
+  method iterator {
+    my $oc = self;
+    my $path = $!path;
+
+    class :: does Iterator {
+      has $.index is rw = 0;
+
+      method pull-one {
+        my $r;
+        if $path.num_data > $.index {
+          $r = $oc.get_data($.index);
+          $.index += $r.elems;
+        } else {
+          $r := IterationEnd;
+        }
+        $r;
+      }
+    }.new;
+  }
+
+  method new (cairo_path_t $path) {
+    self.bless(:$path);
+  }
+
+  method destroy {
+    $!path.destroy;
+  }
+}
+
 
 class Font {
     sub cairo_ft_font_face_create_for_ft_face(Pointer $ft-face, int32 $flags)
@@ -1373,4 +1714,63 @@ class Font {
                                                                 $flags )
                  )
       }
+}
+
+class FontOptions {
+
+  sub font_options_create()
+      returns cairo_font_options_t
+      is native($cairolib)
+      is symbol('cairo_font_options_create')
+      {*}
+
+  has cairo_font_options_t $.font_options handles <destroy hash>;
+
+  submethod BUILD(:$!font_options) { }
+
+  method Cairo::cairo_font_options_t {
+    $.font_options;
+  }
+
+  multi method new {
+    my $font_options = font_options_create();
+    self.bless(:$font_options);
+  }
+  multi method new (cairo_font_options_t $font_options) {
+    self.bless(:$font_options);
+  }
+
+  method status {
+    CairoStatus( $.font_options.status );
+  }
+
+  method merge($other) {
+    $.font_options.merge($other);
+  }
+
+  method equal(cairo_font_options_t $b) {
+    so $.font_options.equals($b);
+  }
+
+  method antialias() is rw {
+      Proxy.new:
+          FETCH => { Antialias( $.font_options.get_antialias ) },
+          STORE => -> \c, \value { $.font_options.set_antialias(value.Int) }
+  }
+  method subpixel_order() is rw {
+      Proxy.new:
+          FETCH => { SubpixelOrder( $.font_options.get_subpixel_order ) },
+          STORE => -> \c, \value { $.font_options.set_subpixel_order(value.Int) }
+  }
+  method hint_style() is rw {
+      Proxy.new:
+          FETCH => { HintStyle( $.font_options.get_hint_style ) },
+          STORE => -> \c, \value { $.font_options.set_hint_style(value.Int) }
+  }
+  method hint_metrics() is rw {
+    Proxy.new:
+          FETCH => { HintMetrics( $.font_options.get_hint_metrics ) },
+          STORE => -> \c, \value { $.font_options.set_hint_metrics(value.Int) }
+  }
+
 }
