@@ -1,6 +1,7 @@
 language: perl6
 perl6:
   - latest
+  - '2018.12'
 addons:
   apt:
     packages:
