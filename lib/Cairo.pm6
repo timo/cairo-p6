@@ -99,6 +99,21 @@ our enum CairoStatus is export <
     STATUS_LAST_STATUS
 >;
 
+# Backwards Compatibility
+our enum cairo_path_data_type_t is export <
+  CAIRO_PATH_MOVE_TO
+  CAIRO_PATH_LINE_TO
+  CAIRO_PATH_CURVE_TO
+  CAIRO_PATH_CLOSE_PATH
+>;
+
+our enum PathDataTypes is export <
+  PATH_MOVE_TO
+  PATH_LINE_TO
+  PATH_CURVE_TO
+  PATH_CLOSE_PATH
+>;
+
 my class StreamClosure is repr('CStruct') is rw {
 
     sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
@@ -207,21 +222,6 @@ our class cairo_surface_t is repr('CPointer') {
 
 }
 
-# Backwards Compatibility
-our enum cairo_path_data_type_t is export <
-  CAIRO_PATH_MOVE_TO
-  CAIRO_PATH_LINE_TO
-  CAIRO_PATH_CURVE_TO
-  CAIRO_PATH_CLOSE_PATH
->;
-
-our enum PathDataTypes is export <
-  PATH_MOVE_TO
-  PATH_LINE_TO
-  PATH_CURVE_TO
-  PATH_CLOSE_PATH
->;
-
 our class cairo_rectangle_t is repr('CPointer') { }
 
 our class cairo_path_data_header_t  is repr('CStruct') {
@@ -272,6 +272,13 @@ our class cairo_font_extents_t is repr('CStruct') {
     has num64 $.height;
     has num64 $.max_x_advance;
     has num64 $.max_y_advance;
+}
+
+our class cairo_rectangle_int_t is repr('CStruct') {
+    has int32 $.x;
+    has int32 $.y;
+    has int32 $.width;
+    has int32 $.height;
 }
 
 our class cairo_font_face_t is repr('CPointer') {
