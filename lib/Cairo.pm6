@@ -274,6 +274,13 @@ our class cairo_font_extents_t is repr('CStruct') {
     has num64 $.max_y_advance;
 }
 
+our class cairo_rectangle_int_t is repr('CStruct') {
+    has int32 $.x;
+    has int32 $.y;
+    has int32 $.width;
+    has int32 $.height;
+}
+
 our class cairo_font_face_t is repr('CPointer') {
    method destroy
         is native($cairolib)
