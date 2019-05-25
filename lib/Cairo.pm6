@@ -224,13 +224,6 @@ our class cairo_surface_t is repr('CPointer') {
 
 our class cairo_rectangle_t is repr('CPointer') { }
 
-our class cairo_rectangle_int_t is repr('CStruct') is export {
-  has int32 $.x      is rw;
-  has int32 $.y      is rw;
-  has int32 $.width  is rw;
-  has int32 $.height is rw;
-}
-
 our class cairo_path_data_header_t  is repr('CStruct') {
   has uint32     $.type;
   has int32      $.length;
@@ -265,27 +258,27 @@ our class cairo_path_t is repr('CStruct') is export {
 }
 
 our class cairo_text_extents_t is repr('CStruct') {
-    has num64 $.x_bearing;
-    has num64 $.y_bearing;
-    has num64 $.width;
-    has num64 $.height;
-    has num64 $.x_advance;
-    has num64 $.y_advance;
+    has num64 $.x_bearing is rw;
+    has num64 $.y_bearing is rw;
+    has num64 $.width     is rw;
+    has num64 $.height    is rw;
+    has num64 $.x_advance is rw;
+    has num64 $.y_advance is rw;
 }
 
 our class cairo_font_extents_t is repr('CStruct') {
-    has num64 $.ascent;
-    has num64 $.descent;
-    has num64 $.height;
-    has num64 $.max_x_advance;
-    has num64 $.max_y_advance;
+    has num64 $.ascent        is rw;
+    has num64 $.descent       is rw;
+    has num64 $.height        is rw;
+    has num64 $.max_x_advance is rw;
+    has num64 $.max_y_advance is rw;
 }
 
 our class cairo_rectangle_int_t is repr('CStruct') {
-    has int32 $.x;
-    has int32 $.y;
-    has int32 $.width;
-    has int32 $.height;
+    has int32 $.x      is rw;
+    has int32 $.y      is rw;
+    has int32 $.width  is rw;
+    has int32 $.height is rw;
 }
 
 our class cairo_font_face_t is repr('CPointer') {
