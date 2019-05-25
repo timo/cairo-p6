@@ -224,6 +224,13 @@ our enum PathDataTypes is export <
 
 our class cairo_rectangle_t is repr('CPointer') { }
 
+our class cairo_rectangle_int_t is repr('CStruct') is export {
+  has int32 $.x      is rw;
+  has int32 $.y      is rw;
+  has int32 $.width  is rw;
+  has int32 $.height is rw;
+}
+
 our class cairo_path_data_header_t  is repr('CStruct') {
   has uint32     $.type;
   has int32      $.length;
