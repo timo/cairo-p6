@@ -220,6 +220,7 @@ our class cairo_surface_t is repr('CPointer') {
         is symbol('cairo_image_surface_get_height')
         {*}
 
+    submethod DESTROY { self.destroy }
 }
 
 our class cairo_rectangle_t is repr('CPointer') { }
@@ -286,6 +287,13 @@ our class cairo_font_face_t is repr('CPointer') {
         is native($cairolib)
         is symbol('cairo_font_face_destroy')
         {*}
+
+    method reference
+        is native($cairolib)
+        is symbol('cairo_font_face_reference')
+        {*}
+
+    submethod DESTROY { self.destroy }
 }
 
 our class cairo_matrix_t is repr('CStruct') {
@@ -332,6 +340,11 @@ our class cairo_pattern_t is repr('CPointer') {
         is symbol('cairo_pattern_destroy')
         {*}
 
+    method reference
+        is native($cairolib)
+        is symbol('cairo_pattern_reference')
+        {*}
+
     method get_extend
         returns int32
         is native($cairolib)
@@ -365,6 +378,7 @@ our class cairo_pattern_t is repr('CPointer') {
         is symbol('cairo_pattern_add_color_stop_rgba')
         {*}
 
+    submethod DESTROY { self.destroy }
 }
 
 class cairo_font_options_t is repr('CPointer') {
@@ -447,6 +461,7 @@ class cairo_font_options_t is repr('CPointer') {
         is symbol('cairo_font_options_get_hint_metrics')
         {*}
 
+    submethod DESTROY { self.destroy }
 }
 
 our class cairo_t is repr('CPointer') {
@@ -454,6 +469,10 @@ our class cairo_t is repr('CPointer') {
     method destroy
         is native($cairolib)
         is symbol('cairo_destroy')
+        {*}
+    method reference
+        is native($cairolib)
+        is symbol('cairo_reference')
         {*}
 
     method sub_path
@@ -791,6 +810,8 @@ our class cairo_t is repr('CPointer') {
         is native($cairolib)
         is symbol('cairo_get_font_options')
         {*}
+
+    submethod DESTROY { self.destroy }
 }
 
 # Backwards compatibility
@@ -1259,7 +1280,7 @@ class Pattern::Gradient::Radial { ... }
 
 class Pattern {
 
-    has cairo_pattern_t $.pattern handles <destroy>;
+    has cairo_pattern_t $.pattern handles <destroy reference>;
 
     multi method new(cairo_pattern_t $pattern) {
         self.bless(:$pattern)
@@ -1364,7 +1385,7 @@ class Context {
         {*}
 
     has cairo_t $.context handles <
-        status destroy push_group pop_group_to_source sub_path
+        status destroy reference push_group pop_group_to_source sub_path
         save restore paint close_path new_path identity_matrix
     >;
 
@@ -1662,7 +1683,7 @@ class Context {
 }
 
 class Path {
-  has cairo_path_t $.path handles <data num_data>;
+  has cairo_path_t $.path handles <data num_data destroy>;
 
   submethod BUILD (:$!path) { }
 
@@ -1701,10 +1722,6 @@ class Path {
   method new (cairo_path_t $path) {
     self.bless(:$path);
   }
-
-  method destroy {
-    $!path.destroy;
-  }
 }
 
 
@@ -1714,7 +1731,7 @@ class Font {
         is native($cairolib)
         {*}
 
-      has cairo_font_face_t $.face handles <destroy>;
+      has cairo_font_face_t $.face handles <destroy reference>;
       multi method create($font-face, :$free-type! where .so, Int :$flags = 0) {
           return self.new(
                  face => cairo_ft_font_face_create_for_ft_face( nativecast(Pointer, $font-face),
