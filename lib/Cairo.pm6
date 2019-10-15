@@ -199,8 +199,13 @@ our class cairo_surface_t is repr('CPointer') {
         is symbol('cairo_surface_destroy')
         {*}
 
+    method get_image_format
+      returns uint32
+      is native($cairolib)
+      is symbol('cairo_image_surface_get_format')
+      {*}
     method get_image_data
-        returns OpaquePointer
+        returns CArray[uint8]
         is native($cairolib)
         is symbol('cairo_image_surface_get_data')
         {*}
@@ -219,6 +224,22 @@ our class cairo_surface_t is repr('CPointer') {
         is native($cairolib)
         is symbol('cairo_image_surface_get_height')
         {*}
+
+    sub cairo_format_stride_for_width(int32 $format, int32 $width)
+        returns int32
+        is native($cairolib)
+        {*}
+
+    method datasize() {
+        self.get_image_height * cairo_surface_t.stride_for_width(
+          self.get_image_format,
+          self.get_image_width
+        )
+    }
+
+    method stride_for_width (cairo_surface_t:U: Int(Cool) $f, Int(Cool) $w) {
+      cairo_format_stride_for_width($f, $w);
+    }
 
 }
 
@@ -1055,7 +1076,7 @@ class Matrix {
 }
 
 class Surface {
-    has cairo_surface_t $.surface handles <reference destroy flush finish show_page status>;
+    has cairo_surface_t $.surface handles <reference destroy flush finish show_page status datasize>;
 
     method write_png(Str $filename) {
         my $result = CairoStatus( $!surface.write_to_png($filename) );
@@ -1157,10 +1178,12 @@ class Image is Surface {
 
     sub cairo_image_surface_create_for_data_ca(CArray[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
+        is symbol('cairo_image_surface_create_for_data')
         is native($cairolib)
         {*}
     sub cairo_image_surface_create_for_data_b(Blob[uint8] $data, int32 $format, int32 $width, int32 $height, int32 $stride)
         returns cairo_surface_t
+        is symbol('cairo_image_surface_create_for_data')
         is native($cairolib)
         {*}
     sub cairo_image_surface_create_for_data(Pointer $data, int32 $format, int32 $width, int32 $height, int32 $stride)
@@ -1180,44 +1203,50 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    sub cairo_format_stride_for_width(int32 $format, int32 $width)
-        returns int32
-        is native($cairolib)
-        {*}
-
     multi method create(Int() $format, Cool $width, Cool $height) {
         return self.new(surface => cairo_image_surface_create($format.Int, $width.Int, $height.Int));
     }
 
     multi method create(Int() $format, Cool $width, Cool $height, $data, Cool $stride? is copy) {
-        if $stride eqv False {
-            $stride = $width.Int;
-        } elsif $stride eqv True {
-            $stride = cairo_format_stride_for_width($format.Int, $width.Int);
+        $stride = do given $stride {
+          # If not specified or false, then use the default stride for the given width
+          when .defined.not.so |
+               .so             { cairo_surface_t.stride_for_width($format, $width) }
+
+          # If defined as true, then use the width. This value cannot be odd!
+          when .so.not         { $width.Int }
+
+          # Otherwise try to coerce the stride value to Integer.
+          when Int             { $_   }
+          when Cool            { .Int }
+
+          default {
+            die "Unexpected value passed as stride ({.^name})";
+          }
         }
+
         my $d = do given $data {
-          when Array[uint8]     { my $tmp = CArray[uint8].new($_);
-                                  $_ = $tmp;
-                                  proceed; }
-          when Buf[uint8]       { my $tmp = nativecast(Blob[uint8], $_);
-                                  $_ = $tmp;
-                                  proceed; }
+          when Array            { die 'Elements of array must be uint8'
+                                    unless .all ~~ 0..255;
+                                  $_ = CArray[uint8].new($_);       proceed }
+          when Array[uint8]     { $_ = CArray[uint8].new($_);       proceed }
+          when Buf[uint8]       { $_ = nativecast(Blob[uint8], $_); proceed }
           when CArray[uint8]  |
                Blob[uint8]    |
                Pointer          { $_ }
 
           default {
-            die qq:to/D/;
-              Invalid type: { .^name }
-              Cairo::Image.create only supports variables of type: {
-              '' }Array[uint8], CArray[uint8], Blob[uint8] and Pointer.
-              D
+              die qq:to/D/;
+                Invalid type: { .^name }
+                Cairo::Image.create only supports variables of type: {
+                '' }Array[uint8], CArray[uint8], Blob[uint8] and Pointer.
+                D
           }
         }
         return self.new(surface => do given $d {
-          when CArray  { cairo_image_surface_create_for_data_ca($d, $format.Int, $width.Int, $height.Int, $stride) }
-          when Blob    { cairo_image_surface_create_for_data_b($d, $format.Int, $width.Int, $height.Int, $stride) }
-          when Pointer { cairo_image_surface_create_for_data($d, $format.Int, $width.Int, $height.Int, $stride) }
+            when CArray  { cairo_image_surface_create_for_data_ca($d, $format.Int, $width.Int, $height.Int, $stride.Int) }
+            when Blob    { cairo_image_surface_create_for_data_b($d, $format.Int, $width.Int, $height.Int, $stride.Int) }
+            when Pointer { cairo_image_surface_create_for_data($d, $format.Int, $width.Int, $height.Int, $stride.Int) }
         });
     }
 
@@ -1228,10 +1257,14 @@ class Image is Surface {
     }
 
     multi method open(str $filename) {
-        return self.new(surface => cairo_image_surface_create_from_png($filename));
+        return self.new(
+            surface => cairo_image_surface_create_from_png($filename)
+        );
     }
     multi method open(Str(Cool) $filename) {
-        return self.new(surface => cairo_image_surface_create_from_png($filename));
+        return self.new(
+            surface => cairo_image_surface_create_from_png($filename)
+        );
     }
 
     method record(&things, Cool $width?, Cool $height?, Format $format = FORMAT_ARGB32) {
@@ -1245,10 +1278,19 @@ class Image is Surface {
         }
     }
 
-    method data()   { $.surface.get_image_data }
-    method stride() { $.surface.get_image_stride }
-    method width()  { $.surface.get_image_width }
-    method height() { $.surface.get_image_height }
+    method format     { $.surface.get_image_format }
+
+    # Look into using memcpy
+    method data       { $.surface.flush;
+                        Blob.new( $.surface.get_image_data[^self.datasize] ) }
+
+    # There should be some way of setting the max size of a CArray!
+    method data-rw    { $.surface.flush;
+                        $.surface.get_image_data }
+
+    method stride()   { $.surface.get_image_stride }
+    method width()    { $.surface.get_image_width }
+    method height()   { $.surface.get_image_height }
 }
 
 class Pattern::Solid { ... }
