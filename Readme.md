@@ -1,10 +1,10 @@
-Cairo 2D Graphics library binding for Perl 6
-============================================
+Cairo 2D Graphics library binding for Raku
+==========================================
 
 Synopsis
 --------
 
-```perl
+```raku
 use Cairo;
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
     given Cairo::Context.new($_) {
