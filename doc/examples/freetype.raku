@@ -12,9 +12,9 @@ sub MAIN(
 ) {
     my Font::FreeType::Face $face = $freetype.face($font-file);
     # get the underlying FreeType Face native C-struct
-    my FT_Face $face-struct = $face.native;
+    my FT_Face $ft-face = $face.raw;
     my Cairo::Font $font .= create(
-        $face-struct, :free-type,
+        $ft-face, :free-type,
     );
 
     freetype-demo($font, $png);
