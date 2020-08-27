@@ -1,8 +1,8 @@
 # This example requires the Font::FreeType module
 use Cairo;
-use Font::FreeType:ver<0.1.9+>;
+use Font::FreeType:ver<0.3.0+>;
 use Font::FreeType::Face;
-use Font::FreeType::Native;
+use Font::FreeType::Raw;
 
 my Font::FreeType $freetype .= new;
 
