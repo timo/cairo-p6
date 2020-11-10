@@ -124,7 +124,7 @@ my class StreamClosure is repr('CStruct') is rw {
     has size_t $.buf-len;
     has size_t $.n-read;
     has size_t $.size;
-    method TWEAK(CArray :$buf!) { $!buf := $buf }
+    submethod TWEAK(CArray :$buf!) { $!buf := $buf }
     method buf-pointer(--> Pointer[uint8]) {
         nativecast(Pointer[uint8], $!buf);
     }
@@ -285,6 +285,26 @@ our class cairo_font_face_t is repr('CPointer') {
    method destroy
         is native($cairolib)
         is symbol('cairo_font_face_destroy')
+        {*}
+}
+
+our class cairo_glyph_t is repr('CStruct') {
+    has ulong $.index is rw;
+    has num64 $.x     is rw ;
+    has num64 $.y     is rw;
+
+    sub cairo_glyph_allocate(int32 $num_glyphs)
+        returns cairo_glyph_t
+        is native($cairolib)
+        {*}
+
+    method allocate(UInt $num_glyphs) {
+        cairo_glyph_allocate($num_glyphs);
+    }
+
+    method free
+        is native($cairolib)
+        is symbol('cairo_glyph_free')
         {*}
 }
 
@@ -760,6 +780,16 @@ our class cairo_t is repr('CPointer') {
     method text_path(Str $utf8)
         is native($cairolib)
         is symbol('cairo_text_path')
+        {*}
+
+    method show_glyphs(cairo_glyph_t $glyphs, int32 $len)
+        is native($cairolib)
+        is symbol('cairo_show_glyphs')
+        {*}
+
+    method glyph_path(cairo_glyph_t $glyphs, int32 $len)
+        is native($cairolib)
+        is symbol('cairo_glyph_path')
         {*}
 
     method text_extents(Str $utf8, cairo_text_extents_t $extents)
@@ -1256,6 +1286,7 @@ class Pattern::Surface { ... }
 class Pattern::Gradient { ... }
 class Pattern::Gradient::Linear { ... }
 class Pattern::Gradient::Radial { ... }
+class Glyphs {...}
 
 class Pattern {
 
@@ -1565,6 +1596,14 @@ class Context {
         $!context.show_text($text);
     }
 
+    method show_glyphs(Glyphs $glyph_array) {
+        $!context.show_glyphs($glyph_array.glyphs, $glyph_array.elems);
+    }
+
+    method glyph_path(Glyphs $glyph_array) {
+        $!context.glyph_path($glyph_array.glyphs, $glyph_array.elems);
+    }
+
     multi method text_path(str $text) {
         $!context.text_path($text);
     }
@@ -1781,3 +1820,23 @@ class FontOptions {
   }
 
 }
+
+class Glyphs {
+    has UInt:D $.elems is required;
+    has cairo_glyph_t $!glyphs; # a contiguous array of $!elems glyphs
+    has Numeric ($.x-advance, $.y-advance) is rw;
+    constant RecSize = nativesizeof(cairo_glyph_t);
+    submethod TWEAK {
+        $!glyphs = cairo_glyph_t.allocate($!elems);
+    }
+    method glyphs { $!glyphs }
+    method AT-POS(Int:D $idx where 0 <= * < $!elems) {
+        my Pointer $base-addr := nativecast(Pointer, $!glyphs);
+        my Pointer $rec-addr := Pointer.new(+$base-addr  +  RecSize * $idx);
+        nativecast(cairo_glyph_t, $rec-addr);
+    }
+    submethod DESTROY {
+        $!glyphs.free;
+    }
+}
+
