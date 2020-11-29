@@ -1,4 +1,4 @@
-unit module Cairo:ver<0.2.5>;
+unit module Cairo:ver<0.2.7>;
 
 our $cairolib;
 BEGIN {
@@ -1754,11 +1754,12 @@ class Font {
         {*}
 
       has cairo_font_face_t $.face handles <destroy>;
-      multi method create($font-face, :$free-type! where .so, Int :$flags = 0) {
+      multi method create($font-face, :free-type($)! where .so, Int :$flags = 0) {
           return self.new(
-                 face => cairo_ft_font_face_create_for_ft_face( nativecast(Pointer, $font-face),
-                                                                $flags )
-                 )
+              face => cairo_ft_font_face_create_for_ft_face(
+                  nativecast(Pointer, $font-face),
+                  $flags )
+          )
       }
 }
 
