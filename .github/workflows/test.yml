@@ -29,7 +29,8 @@ jobs:
         run: |
           # install and test if need be (includes [test-depends])
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y libcairo2
+              :; # already installed
+              #sudo apt-get install -y libcairo2
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew update
               brew install cairo
