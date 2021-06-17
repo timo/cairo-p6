@@ -39,7 +39,6 @@ jobs:
               exit 1;
           fi
           zef install --deps-only .
-          zef build .
           zef install --/test App::Prove6
       - name: Run Tests
         run: prove6 -I. t
