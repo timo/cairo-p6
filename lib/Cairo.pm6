@@ -821,6 +821,16 @@ our class cairo_t is repr('CPointer') {
         is native($cairolib)
         is symbol('cairo_get_font_options')
         {*}
+
+    method tag_begin(Str $tag, Str $attrs)
+        is native($cairolib)
+        is symbol('cairo_tag_begin')
+        {*}
+
+    method tag_end(Str $tag)
+        is native($cairolib)
+        is symbol('cairo_tag_end')
+        {*}
 }
 
 # Backwards compatibility
@@ -1686,6 +1696,13 @@ class Context {
         Proxy.new:
             FETCH => { $!context.get_font_options},
             STORE => -> \c, cairo_font_options_t() \value { $!context.set_font_options(value) }
+    }
+
+    method tag(Str $tag, &block, *%attrs) {
+        warn "todo tag attribute serialization" if %attrs;
+        $!context.tag_begin($tag, Str);
+        &block(self);
+        $!context.tag_end($tag);
     }
 
     method matrix() is rw {
