@@ -114,6 +114,12 @@ our enum PathDataTypes is export <
   PATH_CLOSE_PATH
 >;
 
+our enum cairo_pdf_outline_flags_t is export (
+    :CAIRO_PDF_OUTLINE_FLAG_OPEN(0x1),
+    :CAIRO_PDF_OUTLINE_FLAG_BOLD(0x2),
+    :CAIRO_PDF_OUTLINE_FLAG_ITALIC(0x4),
+);
+
 my class StreamClosure is repr('CStruct') is rw {
 
     sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
@@ -125,7 +131,7 @@ my class StreamClosure is repr('CStruct') is rw {
     has size_t $.n-read;
     has size_t $.size;
     submethod TWEAK(CArray :$buf!) { $!buf := $buf }
-    method buf-pointer(--> Pointer[uint8]) {
+    method buf-pointer( --> Pointer[uint8]) {
         nativecast(Pointer[uint8], $!buf);
     }
     method read-pointer(--> Pointer) {
@@ -282,6 +288,11 @@ our class cairo_rectangle_int_t is repr('CStruct') {
 }
 
 our class cairo_font_face_t is repr('CPointer') {
+
+   method reference
+        is native($cairolib)
+        is symbol('cairo_font_face_reference')
+        {*}
    method destroy
         is native($cairolib)
         is symbol('cairo_font_face_destroy')
@@ -767,6 +778,12 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_set_font_face')
         {*}
 
+    method get_font_face
+        returns cairo_font_face_t
+        is native($cairolib)
+        is symbol('cairo_get_font_face')
+        {*}
+
     method set_font_size(num64 $size)
         is native($cairolib)
         is symbol('cairo_set_font_size')
@@ -830,6 +847,11 @@ our class cairo_t is repr('CPointer') {
     method tag_end(Str $tag)
         is native($cairolib)
         is symbol('cairo_tag_end')
+        {*}
+
+    method add_outline(int32 $parent-id, Str $name, Str $attrs, int32 $flags)
+        is native($cairolib)
+        is symbol('cairo_pdf_surface_add_outline')
         {*}
 }
 
@@ -1591,6 +1613,11 @@ class Context {
     method set_font_face(Cairo::Font $font) {
         $!context.set_font_face($font.face);
     }
+    method get_font_face {
+        my $face =  $!context.get_font_face;
+        $face.reference;
+        Cairo::Face.new: :$face;
+    }
 
     multi method set_font_size(num $size) {
         $!context.set_font_size($size);
@@ -1697,12 +1724,65 @@ class Context {
             FETCH => { $!context.get_font_options},
             STORE => -> \c, cairo_font_options_t() \value { $!context.set_font_options(value) }
     }
+    method font_face() is rw {
+        Proxy.new:
+            FETCH => { self.get_font_face},
+            STORE => -> \c, Cairo::Font() \value { self.set_font_face(value) }
+    }
 
-    method tag(Str $tag, &block, *%attrs) {
-        warn "todo tag attribute serialization" if %attrs;
-        $!context.tag_begin($tag, Str);
+    sub attr-value($_) {
+        when Bool  { $_ ?? '=true' !! ''}
+        when Int  { '=' ~ .Str }
+        when Numeric {
+            my Str $num = .fmt('%.5f');
+            $num ~~ s/(\.\d*?)0+$/$0/;
+            $num .= chop if $num.ends-with('.');
+            '=' ~ $num
+        }
+        when Str {
+            q{='} ~ .trans("\\" => "\\\\", "'" => "\\'") ~ q{'};
+        }
+        when List {
+            join ' ', ('=[', .Slip, ']');
+        }
+        default {
+            warn "unsupported attribute value: {.raku}";
+            ''
+        }
+    }
+
+    sub build-attrs(%attrs) {
+        join ' ', %attrs.sort.map: {
+            .value.defined
+                ?? .key ~ attr-value(.value)
+                !! Empty
+        }
+    }
+
+    # tags links, destinations; primarily for PDF backend
+    method tag(Str:D $tag, &block, *%attrs) {
+        $!context.tag_begin: $tag, build-attrs(%attrs);
         &block(self);
         $!context.tag_end($tag);
+    }
+
+    # URI link
+    multi method link(&block, Str:D :$uri!) {
+        $.tag: "Link", &block, :$uri;
+    }
+    # link to a page or named destination, in this or another PDF file
+    multi method link(&block, UInt :$page, Str:D :$name, List :$pos, Str :$file where ($page//$name).defined) {
+        $.tag: "Link", &block, :$page, :$name, :$pos, :$file;
+    }
+
+    # creates a named destination
+    method destination(&block, Str:D :$name!, Numeric :$x, Numeric :$y, Bool :$internal) {
+        $.tag: "cairo.dest", :$name, :$x, :$y, :$internal;
+    }
+
+    # adds an entry into the outline heirarchy
+    method add-outline(Int :$parent-id, Str :$name, :$flags = 0, *%attrs) {
+        $!context.add_outline: $parent-id, $name, build-attrs(%attrs), $flags;
     }
 
     method matrix() is rw {
@@ -1770,12 +1850,24 @@ class Font {
         is native($cairolib)
         {*}
 
+    sub cairo_ft_font_face_create_for_pattern(Pointer $fontconfig-patt)
+        returns cairo_font_face_t
+        is native($cairolib)
+        {*}
+
       has cairo_font_face_t $.face handles <destroy>;
       multi method create($font-face, :free-type($)! where .so, Int :$flags = 0) {
           return self.new(
               face => cairo_ft_font_face_create_for_ft_face(
                   nativecast(Pointer, $font-face),
                   $flags )
+          )
+      }
+      multi method create($pattern, :fontconfig($)! where .so) {
+          return self.new(
+              face => cairo_ft_font_face_create_for_pattern(
+                  nativecast(Pointer, $pattern),
+              )
           )
       }
 }
