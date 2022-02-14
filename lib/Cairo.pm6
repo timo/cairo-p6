@@ -120,6 +120,16 @@ our enum cairo_pdf_outline_flags_t is export (
     :CAIRO_PDF_OUTLINE_FLAG_ITALIC(0x4),
 );
 
+our enum cairo_pdf_metadata_t is export <
+    CAIRO_PDF_METADATA_TITLE
+    CAIRO_PDF_METADATA_AUTHOR
+    CAIRO_PDF_METADATA_SUBJECT
+    CAIRO_PDF_METADATA_KEYWORDS
+    CAIRO_PDF_METADATA_CREATOR
+    CAIRO_PDF_METADATA_CREATE_DATE
+    CAIRO_PDF_METADATA_MOD_DATE
+>;
+
 my class StreamClosure is repr('CStruct') is rw {
 
     sub memcpy(Pointer[uint8] $dest, Pointer[uint8] $src, size_t $n)
@@ -156,6 +166,37 @@ my class StreamClosure is repr('CStruct') is rw {
         return STATUS_SUCCESS;
     }
  }
+
+module Attrs {
+    sub attr-value($_) {
+        when Bool  { $_ ?? '=true' !! ''}
+        when Int  { '=' ~ .Str }
+        when Numeric {
+            my Str $num = .fmt('%.5f');
+            $num ~~ s/(\.\d*?)0+$/$0/;
+            $num .= chop if $num.ends-with('.');
+            '=' ~ $num
+        }
+        when Str {
+            q{='} ~ .trans("\\" => "\\\\", "'" => "\\'") ~ q{'};
+        }
+        when List {
+            join ' ', ('=[', .Slip, ']');
+        }
+        default {
+            warn "unsupported attribute value: {.raku}";
+            ''
+        }
+    }
+
+    our sub build(%attrs) {
+        join ' ', %attrs.sort.map: {
+            .value.defined
+            ?? .key ~ attr-value(.value)
+            !! Empty
+        }
+    }
+}
 
 our class cairo_surface_t is repr('CPointer') {
 
@@ -226,6 +267,19 @@ our class cairo_surface_t is repr('CPointer') {
         is symbol('cairo_image_surface_get_height')
         {*}
 
+}
+
+class cairo_pdf_surface_t is cairo_surface_t is repr('CPointer') {
+
+    method add_outline(int32 $parent-id, Str $name, Str $attrs, int32 $flags)
+        is native($cairolib)
+        is symbol('cairo_pdf_surface_add_outline')
+        {*}
+
+    method set_metadata(int32 $type, Str $value)
+        is native($cairolib)
+        is symbol('cairo_pdf_surface_set_metadata')
+        {*}
 }
 
 our class cairo_rectangle_t is repr('CPointer') { }
@@ -849,10 +903,6 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_tag_end')
         {*}
 
-    method add_outline(int32 $parent-id, Str $name, Str $attrs, int32 $flags)
-        is native($cairolib)
-        is symbol('cairo_pdf_surface_add_outline')
-        {*}
 }
 
 # Backwards compatibility
@@ -1144,7 +1194,7 @@ class Surface {
 
 class Surface::PDF is Surface {
     sub cairo_pdf_surface_create(str $filename, num64 $width, num64 $height)
-        returns cairo_surface_t
+        returns cairo_pdf_surface_t
         is native($cairolib)
         {*}
 
@@ -1164,6 +1214,11 @@ class Surface::PDF is Surface {
             )
     }
 
+    method add_outline(Int :$parent-id, Str :$name, :$flags = 0, *%attrs) {
+        $.surface.add_outline: $parent-id, $name, Attrs::build(%attrs), $flags;
+    }
+
+    method surface handles<set_metadata> { callsame() }
 }
 
 class Surface::SVG is Surface {
@@ -1187,7 +1242,7 @@ class Surface::SVG is Surface {
             :$width, :$height,
             )
     }
-
+    method surface handles<set_metadata> { callsame() }
 }
 
 class RecordingSurface {
@@ -1730,38 +1785,9 @@ class Context {
             STORE => -> \c, Cairo::Font() \value { self.set_font_face(value) }
     }
 
-    sub attr-value($_) {
-        when Bool  { $_ ?? '=true' !! ''}
-        when Int  { '=' ~ .Str }
-        when Numeric {
-            my Str $num = .fmt('%.5f');
-            $num ~~ s/(\.\d*?)0+$/$0/;
-            $num .= chop if $num.ends-with('.');
-            '=' ~ $num
-        }
-        when Str {
-            q{='} ~ .trans("\\" => "\\\\", "'" => "\\'") ~ q{'};
-        }
-        when List {
-            join ' ', ('=[', .Slip, ']');
-        }
-        default {
-            warn "unsupported attribute value: {.raku}";
-            ''
-        }
-    }
-
-    sub build-attrs(%attrs) {
-        join ' ', %attrs.sort.map: {
-            .value.defined
-                ?? .key ~ attr-value(.value)
-                !! Empty
-        }
-    }
-
     # tags links, destinations; primarily for PDF backend
     method tag(Str:D $tag, &block, *%attrs) {
-        $!context.tag_begin: $tag, build-attrs(%attrs);
+        $!context.tag_begin: $tag, Attrs::build(%attrs);
         &block(self);
         $!context.tag_end($tag);
     }
@@ -1778,11 +1804,6 @@ class Context {
     # creates a named destination
     method destination(&block, Str:D :$name!, Numeric :$x, Numeric :$y, Bool :$internal) {
         $.tag: "cairo.dest", :$name, :$x, :$y, :$internal;
-    }
-
-    # adds an entry into the outline heirarchy
-    method add-outline(Int :$parent-id, Str :$name, :$flags = 0, *%attrs) {
-        $!context.add_outline: $parent-id, $name, build-attrs(%attrs), $flags;
     }
 
     method matrix() is rw {
