@@ -99,7 +99,6 @@ our enum CairoStatus is export <
     STATUS_LAST_STATUS
 >;
 
-# Backwards Compatibility
 our enum cairo_path_data_type_t is export <
   CAIRO_PATH_MOVE_TO
   CAIRO_PATH_LINE_TO
@@ -113,6 +112,11 @@ our enum PathDataTypes is export <
   PATH_CURVE_TO
   PATH_CLOSE_PATH
 >;
+
+our enum cairo_tag_t is export (
+    :CAIRO_TAG_DEST<cairo.dest>,
+    :CAIRO_TAG_LINK<Link>,
+);
 
 our enum cairo_pdf_outline_flags_t is export (
     :CAIRO_PDF_OUTLINE_FLAG_OPEN(0x1),
@@ -170,6 +174,7 @@ my class StreamClosure is repr('CStruct') is rw {
 module Attrs {
     sub attr-value($_) {
         when Bool  { $_ ?? '=true' !! ''}
+        when Complex { '=[' ~ attr-value(.re) ~ ',' ~ attr-value(.im) ~ ']' }
         when Int  { '=' ~ .Str }
         when Numeric {
             my Str $num = .fmt('%.5f');
@@ -271,7 +276,7 @@ our class cairo_surface_t is repr('CPointer') {
 
 class cairo_pdf_surface_t is cairo_surface_t is repr('CPointer') {
 
-    method add_outline(int32 $parent-id, Str $name, Str $attrs, int32 $flags)
+    method add_outline(int32 $parent-id, Str $name, Str $link-attrs, int32 $flags --> int32)
         is native($cairolib)
         is symbol('cairo_pdf_surface_add_outline')
         {*}
@@ -1214,7 +1219,7 @@ class Surface::PDF is Surface {
             )
     }
 
-    method add_outline(Int :$parent-id, Str :$name, :$flags = 0, *%attrs) {
+    method add_outline(Int :$parent-id, Str:D :$name = '', :$flags = 0, *%attrs) {
         $.surface.add_outline: $parent-id, $name, Attrs::build(%attrs), $flags;
     }
 
@@ -1242,7 +1247,6 @@ class Surface::SVG is Surface {
             :$width, :$height,
             )
     }
-    method surface handles<set_metadata> { callsame() }
 }
 
 class RecordingSurface {
