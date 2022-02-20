@@ -173,20 +173,17 @@ my class StreamClosure is repr('CStruct') is rw {
 
 module Attrs {
     sub attr-value($_) {
-        when Bool  { $_ ?? '=true' !! ''}
-        when Complex { '=[' ~ attr-value(.re) ~ ',' ~ attr-value(.im) ~ ']' }
-        when Int  { '=' ~ .Str }
+        when List { '[' ~ .map(&attr-value).join(' ') ~ ']' }
+        when Bool  { $_ ?? 'true' !! 'false'}
+        when Int  { .Str }
         when Numeric {
             my Str $num = .fmt('%.5f');
             $num ~~ s/(\.\d*?)0+$/$0/;
             $num .= chop if $num.ends-with('.');
-            '=' ~ $num
+            $num
         }
         when Str {
-            q{='} ~ .trans("\\" => "\\\\", "'" => "\\'") ~ q{'};
-        }
-        when List {
-            join ' ', ('=[', .Slip, ']');
+            q{'} ~ .trans("\\" => "\\\\", "'" => "\\'") ~ q{'};
         }
         default {
             warn "unsupported attribute value: {.raku}";
@@ -194,10 +191,10 @@ module Attrs {
         }
     }
 
-    our sub build(%attrs) {
+    our sub serialize(%attrs) {
         join ' ', %attrs.sort.map: {
             .value.defined
-            ?? .key ~ attr-value(.value)
+            ?? .key ~ '=' ~ attr-value(.value)
             !! Empty
         }
     }
@@ -1220,7 +1217,7 @@ class Surface::PDF is Surface {
     }
 
     method add_outline(Int :$parent-id, Str:D :$name = '', :$flags = 0, *%attrs) {
-        $.surface.add_outline: $parent-id, $name, Attrs::build(%attrs), $flags;
+        $.surface.add_outline: $parent-id, $name, Attrs::serialize(%attrs), $flags;
     }
 
     method surface handles<set_metadata> { callsame() }
@@ -1488,6 +1485,7 @@ class Context {
     has cairo_t $.context handles <
         status destroy push_group pop_group_to_source sub_path
         save restore paint close_path new_path identity_matrix
+        tag_end
     >;
 
     multi method new(cairo_t $context) {
@@ -1789,25 +1787,39 @@ class Context {
             STORE => -> \c, Cairo::Font() \value { self.set_font_face(value) }
     }
 
+    method tag_begin(Str:D $tag, *%attrs) {
+        $!context.tag_begin($tag, Attrs::serialize(%attrs));
+    }
+
     # tags links, destinations; primarily for PDF backend
-    method tag(Str:D $tag, &block, *%attrs) {
-        $!context.tag_begin: $tag, Attrs::build(%attrs);
+    method tag(Str:D $tag, &block) {
+        $.tag_begin: $tag, |%_;
         &block(self);
-        $!context.tag_end($tag);
+        $.tag_end($tag);
     }
 
     # URI link
-    multi method link(&block, Str:D :$uri!) {
-        $.tag: "Link", &block, :$uri;
+    multi method link_begin(Str:D :$uri!, List :$rect) {
+        $.tag_begin: CAIRO_TAG_LINK, :$uri, :$rect;
     }
-    # link to a page or named destination, in this or another PDF file
-    multi method link(&block, UInt :$page, Str:D :$name, List :$pos, Str :$file where ($page//$name).defined) {
-        $.tag: "Link", &block, :$page, :$name, :$pos, :$file;
+    # link to a named destination, in this or another PDF file
+    multi method link_begin(Str:D :$dest!, Str :$file) {
+        $.tag_begin: CAIRO_TAG_LINK, :$dest, :$file;
+    }
+    # link to a page, in this or another PDF file
+    multi method link_begin(Int:D :$page!, List :$pos, Str :$file) {
+        $.tag_begin: CAIRO_TAG_LINK, :$page, :$pos, :$file;
+    }
+    method link_end { $.tag_end(CAIRO_TAG_LINK) }
+    method link(&block, |c) {
+        $.link_begin: |c;
+        &block();
+        $.link_end;
     }
 
     # creates a named destination
     method destination(&block, Str:D :$name!, Numeric :$x, Numeric :$y, Bool :$internal) {
-        $.tag: "cairo.dest", :$name, :$x, :$y, :$internal;
+        $.tag: CAIRO_TAG_DEST, &block, :$name, :$x, :$y, :$internal;
     }
 
     method matrix() is rw {
