@@ -1690,12 +1690,12 @@ class Context {
         $!context.show_text($text);
     }
 
-    method show_glyphs(Glyphs $glyph_array) {
-        $!context.show_glyphs($glyph_array.glyphs, $glyph_array.elems);
+    method show_glyphs(Glyphs $glyph_array, $n = $glyph_array.elems) {
+        $!context.show_glyphs($glyph_array.glyphs, $n);
     }
 
-    method glyph_path(Glyphs $glyph_array) {
-        $!context.glyph_path($glyph_array.glyphs, $glyph_array.elems);
+    method glyph_path(Glyphs $glyph_array, $n = $glyph_array.elems) {
+        $!context.glyph_path($glyph_array.glyphs, $n);
     }
 
     multi method text_path(str $text) {
