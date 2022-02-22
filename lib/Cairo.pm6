@@ -1,4 +1,4 @@
-unit module Cairo:ver<0.2.7>;
+unit module Cairo:ver<0.3.0>;
 
 our $cairolib;
 BEGIN {
