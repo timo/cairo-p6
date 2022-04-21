@@ -20,7 +20,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
 
         my $text-extents = .text_extents("Hello World");
         isa-ok $text-extents, Cairo::cairo_text_extents_t;
-        ok 60 < $text-extents.width < 75, 'text extents width'
+        ok 30 < $text-extents.width < 75, 'text extents width'
             or diag "got width: {$text-extents.width}";
         ok 5 < $text-extents.height < 9, 'text extents height'
             or diag "got height: {$text-extents.height}";
