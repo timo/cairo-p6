@@ -1,0 +1,3 @@
+init:
+ script: |
+   sudo apk add cairo cairo-dev
