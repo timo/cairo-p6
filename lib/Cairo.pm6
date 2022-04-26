@@ -1488,6 +1488,10 @@ class Context {
         tag_end
     >;
 
+    method Cairo::cairo_t {
+      $.context
+    }
+
     multi method new(cairo_t $context) {
         self.bless(:$context);
     }
@@ -1986,4 +1990,3 @@ class Glyphs {
         $!glyphs.free;
     }
 }
-
