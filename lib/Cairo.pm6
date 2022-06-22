@@ -355,6 +355,18 @@ our class cairo_font_face_t is repr('CPointer') {
         {*}
 }
 
+our class cairo_scaled_font_t is repr('CPointer') {
+
+   method reference
+        is native($cairolib)
+        is symbol('cairo_scaled_font_reference')
+        {*}
+   method destroy
+        is native($cairolib)
+        is symbol('cairo_scaled_font_destroy')
+        {*}
+}
+
 our class cairo_glyph_t is repr('CStruct') {
     has ulong $.index is rw;
     has num64 $.x     is rw ;
@@ -845,6 +857,17 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_set_font_size')
         {*}
 
+    method set_scaled_font(cairo_scaled_font_t $font)
+        is native($cairolib)
+        is symbol('cairo_set_scaled_font')
+        {*}
+
+    method get_scaled_font
+        returns cairo_scaled_font_t
+        is native($cairolib)
+        is symbol('cairo_get_scaled_font')
+        {*}
+
     method show_text(Str $utf8)
         is native($cairolib)
         is symbol('cairo_show_text')
@@ -968,6 +991,8 @@ our class Image   { ... }
 our class Pattern { ... }
 our class Context { ... }
 our class Font    { ... }
+our class FontOptions { ... }
+our class ScaledFont  { ... }
 
 # Backwards compatibility
 our enum cairo_format_t is export (
@@ -1687,6 +1712,15 @@ class Context {
         $!context.set_font_size($size);
     }
 
+    method set_scaled_font(Cairo::ScaledFont $font) {
+        $!context.set_scaled_font($font.font);
+    }
+    method get_scaled_font {
+        my $font =  $!context.get_scaled_font;
+        $font.reference;
+        Cairo::Face.new: :$font;
+    }
+
     multi method show_text(str $text) {
         $!context.show_text($text);
     }
@@ -1911,6 +1945,29 @@ class Font {
               )
           )
       }
+}
+
+class ScaledFont {
+    sub cairo_scaled_font_create(cairo_font_face_t, cairo_matrix_t, cairo_matrix_t, cairo_font_options_t)
+        returns cairo_scaled_font_t
+        is native($cairolib)
+        {*}
+
+    has cairo_scaled_font_t $.font handles <destroy>;
+    has Matrix:D $.ctm is required;
+    has Matrix:D $.scale is required;
+    multi method create(Font:D $font, Matrix:D $scale, Matrix:D $ctm, Cairo::FontOptions $opts = Cairo::FontOptions.new) {
+        return self.new(
+            :$ctm,
+            :$scale,
+            font => cairo_scaled_font_create(
+                $font.face,
+                $scale.matrix,
+                $ctm.matrix,
+                $opts.font_options,
+            )
+        )
+    }
 }
 
 class FontOptions {
