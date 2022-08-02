@@ -714,6 +714,16 @@ our class cairo_t is repr('CPointer') {
         is symbol('cairo_get_line_width')
         {*}
 
+    method set_miter_limit(num64 $width)
+        is native($cairolib)
+        is symbol('cairo_set_miter_limit')
+        {*}
+    method get_miter_limit
+        returns num64
+        is native($cairolib)
+        is symbol('cairo_get_miter_limit')
+        {*}
+
     method set_dash(CArray[num64] $dashes, int32 $len, num64 $offset)
         is native($cairolib)
         is symbol('cairo_set_dash')
@@ -1807,6 +1817,12 @@ class Context {
         Proxy.new:
             FETCH => { $!context.get_line_width},
             STORE => -> \c, \value { $!context.set_line_width(value.Num) }
+    }
+
+    method miter_limit() is rw {
+        Proxy.new:
+            FETCH => { $!context.get_miter_limit},
+            STORE => -> \c, \value { $!context.set_miter_limit(value.Num) }
     }
 
     method tolerance() is rw {
