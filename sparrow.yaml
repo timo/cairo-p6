@@ -1,6 +1,5 @@
-init:
- script: |
-   sudo apk add cairo cairo-dev
+image:
+  - melezhik/sparrow:debian
 tasks:
   -
     name: zef-build
@@ -11,3 +10,13 @@ tasks:
       cd source/
       zef install --deps-only --/test .
       zef test .
+    depends:
+      -
+        name: deps
+  -
+    name: deps
+    language: Bash
+    code: |
+      set -e
+      sudo apt-get update
+      sudo apt-get install -y cairo cairo-dev
