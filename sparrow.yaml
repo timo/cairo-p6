@@ -19,4 +19,4 @@ tasks:
     code: |
       set -e
       sudo apt-get update
-      sudo apt-get install -y cairo cairo-dev
+      sudo apt-get install -y libcairo2 libcairo2-dev
