@@ -7,6 +7,9 @@ plan 14;
 constant Matrix = Cairo::Matrix;
 constant matrix_t = Cairo::cairo_matrix_t;
 
+my $version = Cairo::version();
+diag "Running cairo version: $version (module {Cairo.^ver}, Raku {$*RAKU.compiler.version})";
+
 given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
     given Cairo::Context.new($_) {
 
