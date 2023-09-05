@@ -1085,7 +1085,7 @@ our enum cairo_operator_t is export <
   CAIRO_OPERATOR_HSL_LUMINOSITY
 >;
 
-our enum Operator is export <
+our enum CairoOperator is export <
     OPERATOR_CLEAR
 
     OPERATOR_SOURCE
@@ -1877,7 +1877,7 @@ class Context {
 
     method operator() is rw {
         Proxy.new:
-            FETCH => { Operator($!context.get_operator) },
+            FETCH => { CairoOperator($!context.get_operator) },
             STORE => -> \c, \value { $!context.set_operator(value.Int) }
     }
 
