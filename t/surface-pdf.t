@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 4;
+plan 6;
 
 lives-ok {
     given Cairo::Surface::PDF.create("foobar.pdf", 128, 128) {
@@ -20,6 +20,13 @@ lives-ok {
     }
 };
 
+lives-ok {
+    my Cairo::Surface::PDF $pdf .= new: :filename<foo2.pdf>, :width(128), :height(64);
+    $pdf.finish;
+}
+ok "foo2.pdf".IO.e, "pdf created from new";
+
 unlink "foobar.pdf"; # don't care if failed
+unlink "foo2.pdf"; # don't care if failed
 
 done-testing;

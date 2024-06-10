@@ -2,7 +2,7 @@ use v6;
 use Cairo;
 use Test;
 
-plan 4;
+plan 6;
 
 lives-ok {
     given Cairo::Surface::SVG.create("foobar.svg", 128, 128) {
@@ -19,6 +19,13 @@ lives-ok {
     }
 };
 
+lives-ok {
+    my Cairo::Surface::SVG $svg .= new: :filename<foo2.svg>, :width(128), :height(64);
+    $svg.finish;
+}
+ok "foo2.svg".IO.e, "svg created from new";
+
 unlink "foobar.svg"; # don't care if failed
+unlink "foo2.svg"; # don't care if failed
 
 done-testing;
