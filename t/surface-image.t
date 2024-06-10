@@ -4,7 +4,7 @@ use Test;
 plan 2;
 
 lives-ok {
-    given Cairo::Image.create(Cairo::FORMAT_ARGB32, 256, 256) {
+    given Cairo::Image.new(:width(256), :height(256)) {
         given Cairo::Context.new($_) {
             .arc(128.0, 128.0, 76.8, 0, 2*pi);
             .clip;

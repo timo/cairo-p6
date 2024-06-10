@@ -1378,7 +1378,10 @@ class Image is Surface {
 
     multi submethod TWEAK(cairo_surface_t:D :surface($)!) is hidden-from-backtrace {}
     multi submethod TWEAK(Str:D :$filename!) is hidden-from-backtrace {
-        $!surface //= cairo_image_surface_create_from_png($filename)
+        $!surface = cairo_image_surface_create_from_png($filename)
+    }
+    multi submethod TWEAK(Int:D() :$width!, Int:D() :$height!, Int:D() :$format = Cairo::FORMAT_ARGB32) is hidden-from-backtrace {
+        $!surface = cairo_image_surface_create($format, $width.Int, $height);
     }
 
     multi method create(Int() $format, Cool $width, Cool $height) {
