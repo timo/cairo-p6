@@ -1284,7 +1284,7 @@ class Surface::PDF is Surface {
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
-    submethod TWEAK(Str:D() :$filename!) {
+    submethod TWEAK(Str:D() :$filename!) is hidden-from-backtrace {
         $!surface .= new: :$!width, :$!height, :$filename;
     }
     multi method create(str $filename, num64 $width, num64 $height) {
@@ -1306,7 +1306,7 @@ class Surface::SVG is Surface {
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
-    submethod TWEAK(Str:D() :$filename!) {
+    submethod TWEAK(Str:D() :$filename!) is hidden-from-backtrace {
         $!surface .= new: :$!width, :$!height, :$filename;
     }
 
@@ -1376,8 +1376,8 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    multi submethod TWEAK(cairo_surface_t:D :surface($)!) {}
-    multi submethod TWEAK(Str:D :$filename!) {
+    multi submethod TWEAK(cairo_surface_t:D :surface($)!) is hidden-from-backtrace {}
+    multi submethod TWEAK(Str:D :$filename!) is hidden-from-backtrace {
         $!surface //= cairo_image_surface_create_from_png($filename)
     }
 
