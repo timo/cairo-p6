@@ -1254,7 +1254,8 @@ class Matrix {
 }
 
 class Surface {
-    method raw handles <reference destroy flush finish show_page status> { self.surface }
+    has cairo_surface_t $.surface is rw handles <reference destroy flush finish show_page status>;
+    method set-surface($!surface) {}
 
     method write_png(Str $filename) {
         my $result = CairoStatus( $.surface.write_to_png($filename) );
@@ -1280,12 +1281,12 @@ class Surface {
 }
 
 class Surface::PDF is Surface {
-    has cairo_pdf_surface_t:D $.surface is required;
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
     submethod BUILD(Str:D() :$filename!, :$!width!, :$!height!) is hidden-from-backtrace {
-        $!surface .= new: :$!width, :$!height, :$filename;
+        my $s = cairo_pdf_surface_t::create($filename, $!width, $!height);
+        self.set-surface: $s;
     }
 
     method create(Str:D() $filename, Str:D() $width, Str:D() $height) {
@@ -1296,21 +1297,23 @@ class Surface::PDF is Surface {
         $.surface.add_outline: $parent-id, $name, Attrs::serialize(%attrs), $flags;
     }
 
-    method surface handles<set_metadata> { callsame() }
+    method surface returns cairo_pdf_surface_t handles<set_metadata> { callsame() }
 }
 
 class Surface::SVG is Surface {
-    has cairo_svg_surface_t:D $.surface is required;
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
     submethod BUILD(Str:D() :$filename!, :$!width!, :$!height!) is hidden-from-backtrace {
-        $!surface .= new: :$!width, :$!height, :$filename;
+        self.set-surface: cairo_svg_surface_t::create $filename, $!width, $!height;
     }
 
     method create(Str:D() $filename, Int:D() $width, Int:D() $height) {
         return self.new(:$filename, :$width, :$height);
     }
+
+    method surface returns cairo_svg_surface_t { callsame }
+
 }
 
 class RecordingSurface {
@@ -1335,7 +1338,6 @@ class RecordingSurface {
 }
 
 class Image is Surface {
-    has cairo_surface_t:D $.surface is required;
     sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
         is native($cairolib)
@@ -1371,12 +1373,12 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    multi submethod BUILD(cairo_surface_t:D :$!surface) is hidden-from-backtrace {}
+    multi submethod BUILD(cairo_surface_t:D :$surface) is hidden-from-backtrace { self.set-surface: $surface}
     multi submethod BUILD(Str:D :$filename!) is hidden-from-backtrace {
-        $!surface = cairo_image_surface_create_from_png($filename)
+        self.set-surface: cairo_image_surface_create_from_png($filename)
     }
     multi submethod BUILD(Int:D() :$width!, Int:D() :$height!, Int:D() :$format = Cairo::FORMAT_ARGB32) is hidden-from-backtrace {
-        $!surface = cairo_image_surface_create($format, $width.Int, $height);
+        self.set-surface: cairo_image_surface_create($format, $width, $height);
     }
 
     multi method create(Int() $format, Cool $width, Cool $height) {
