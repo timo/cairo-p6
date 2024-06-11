@@ -1280,17 +1280,15 @@ class Surface {
 }
 
 class Surface::PDF is Surface {
-    has cairo_pdf_surface_t $.surface;
+    has cairo_pdf_surface_t:D $.surface is required;
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
-    submethod TWEAK(Str:D() :$filename!) is hidden-from-backtrace {
+    submethod BUILD(Str:D() :$filename!, :$!width!, :$!height!) is hidden-from-backtrace {
         $!surface .= new: :$!width, :$!height, :$filename;
     }
-    multi method create(str $filename, num64 $width, num64 $height) {
-        return self.new( :$filename, :$width, :$height );
-    }
-    multi method create(Str(Cool) $filename, Num(Cool) $width, Num(Cool) $height) {
+
+    method create(Str:D() $filename, Str:D() $width, Str:D() $height) {
         return self.new( :$filename, :$width, :$height );
     }
 
@@ -1302,18 +1300,15 @@ class Surface::PDF is Surface {
 }
 
 class Surface::SVG is Surface {
-    has cairo_svg_surface_t $.surface;
+    has cairo_svg_surface_t:D $.surface is required;
     has Num:D() $.width is required;
     has Num:D() $.height is required;
 
-    submethod TWEAK(Str:D() :$filename!) is hidden-from-backtrace {
+    submethod BUILD(Str:D() :$filename!, :$!width!, :$!height!) is hidden-from-backtrace {
         $!surface .= new: :$!width, :$!height, :$filename;
     }
 
-    multi method create(str $filename, num64 $width, num64 $height) {
-        return self.new(:$filename, :$width, :$height);
-    }
-    multi method create(Str(Cool) $filename, Num(Cool) $width, Num(Cool) $height) {
+    method create(Str:D() $filename, Int:D() $width, Int:D() $height) {
         return self.new(:$filename, :$width, :$height);
     }
 }
@@ -1340,7 +1335,7 @@ class RecordingSurface {
 }
 
 class Image is Surface {
-    has cairo_surface_t $.surface;
+    has cairo_surface_t:D $.surface is required;
     sub cairo_image_surface_create(int32 $format, int32 $width, int32 $height)
         returns cairo_surface_t
         is native($cairolib)
@@ -1376,11 +1371,11 @@ class Image is Surface {
         is native($cairolib)
         {*}
 
-    multi submethod TWEAK(cairo_surface_t:D :surface($)!) is hidden-from-backtrace {}
-    multi submethod TWEAK(Str:D :$filename!) is hidden-from-backtrace {
+    multi submethod BUILD(cairo_surface_t:D :$!surface) is hidden-from-backtrace {}
+    multi submethod BUILD(Str:D :$filename!) is hidden-from-backtrace {
         $!surface = cairo_image_surface_create_from_png($filename)
     }
-    multi submethod TWEAK(Int:D() :$width!, Int:D() :$height!, Int:D() :$format = Cairo::FORMAT_ARGB32) is hidden-from-backtrace {
+    multi submethod BUILD(Int:D() :$width!, Int:D() :$height!, Int:D() :$format = Cairo::FORMAT_ARGB32) is hidden-from-backtrace {
         $!surface = cairo_image_surface_create($format, $width.Int, $height);
     }
 
