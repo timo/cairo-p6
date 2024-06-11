@@ -1254,7 +1254,7 @@ class Matrix {
 }
 
 class Surface {
-    has cairo_surface_t $.surface is rw handles <reference destroy flush finish show_page status>;
+    has cairo_surface_t $.surface handles <reference destroy flush finish show_page status>;
     method set-surface($!surface) {}
 
     method write_png(Str $filename) {
