@@ -1,4 +1,4 @@
-unit module Cairo:ver<0.3.6>;
+unit module Cairo:ver<0.3.7>;
 
 use MacOS::NativeLib 'cairo';
 
