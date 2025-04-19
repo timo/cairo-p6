@@ -3,7 +3,7 @@
     "name" : "Cairo",
     "description" : "Cairo 2D graphics library",
     "version" : "0.3.6",
-    "depends" : [ ],
+    "depends" : [ "MacOS::NativeLib" ],
     "source-url" : "https://github.com/timo/cairo-p6.git",
     "tags" : [ "png", "pdf", "svg", "cairo" ],
     "provides" : {

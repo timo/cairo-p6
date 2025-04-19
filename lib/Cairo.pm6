@@ -1,5 +1,7 @@
 unit module Cairo:ver<0.3.6>;
 
+use MacOS::NativeLib 'cairo';
+
 our $cairolib;
 BEGIN {
     if $*VM.config<dll> ~~ /dll/ {

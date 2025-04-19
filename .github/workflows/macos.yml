@@ -1,4 +1,4 @@
-name: test
+name: test macos
 
 on:
   push:
@@ -13,9 +13,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
           - macOS-latest
-          #- windows-latest
         raku-version:
           - 'latest'
           - '2021.12'
@@ -28,16 +26,8 @@ jobs:
       - name: Install Dependencies
         run: |
           # install and test if need be (includes [test-depends])
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              :; # already installed
-              #sudo apt-get install -y libcairo2
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew update
-              brew install cairo
-          else
-              echo "$RUNNER_OS not supported"
-              exit 1;
-          fi
+          brew update
+          brew install cairo
           zef install --deps-only .
           zef install --/test App::Prove6
       - name: Run Tests
