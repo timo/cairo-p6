@@ -15,7 +15,7 @@ given Cairo::Image.create(Cairo::FORMAT_ARGB32, 128, 128) {
         # issue #11 actual chosen font is system dependant
         my $font-extents = .font_extents;
         isa-ok $font-extents, Cairo::cairo_font_extents_t;
-        ok 7 < $font-extents.ascent < 12, 'font extents ascent'
+        ok 6 <= $font-extents.ascent < 12, 'font extents ascent'
             or diag "got ascent: {$font-extents.ascent}";
 
         my $text-extents = .text_extents("Hello World");
