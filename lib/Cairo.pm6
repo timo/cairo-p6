@@ -1,4 +1,4 @@
-unit module Cairo:ver<0.3.7>;
+unit module Cairo:ver<0.3.8>;
 
 use MacOS::NativeLib 'cairo';
 
@@ -1934,7 +1934,9 @@ class Context {
     }
 
     method tag_begin(Str:D $tag, *%attrs) {
-        $!context.tag_begin($tag, Attrs::serialize(%attrs));
+        my Str:D $params = Attrs::serialize(%attrs);
+        warn (:$tag, :$params).raku;
+        $!context.tag_begin($tag, $params);
     }
 
     # tags links, destinations; primarily for PDF backend
